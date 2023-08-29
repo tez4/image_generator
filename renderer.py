@@ -41,6 +41,13 @@ def remove_old_objects():
     for light in bpy.data.lights:
         bpy.data.lights.remove(light)
 
+    # Meshes
+    for mesh in bpy.data.meshes:
+        bpy.data.meshes.remove(mesh)
+
+    # Images
+    for image in bpy.data.images:
+        bpy.data.images.remove(image)
 
 def create_glowing_material():
     new_material = bpy.data.materials.new(name = "GlowingMaterial")
@@ -181,6 +188,6 @@ if __name__ == '__main__':
         create_glowing_object(glowing_material, 1, (x, y, 2))
     
     create_base_plane()
-    add_world_background("//promenade_de_vidy_4k.exr")
+    add_world_background("//assets/resting_place_4k.exr")
 
 
