@@ -1,28 +1,24 @@
 import bpy
 import random
 
-def create_glowing_object(size = 1, location = (0, 0, 0)):
-    bpy.ops.mesh.primitive_cube_add(size=size, location=location)
-    so = bpy.context.active_object
+def remove_old_objects():
+    # Ensure we're in Object mode
+    bpy.ops.object.mode_set(mode='OBJECT')
 
-    so.rotation_euler[0] = 5
+    # Delete all objects
+    bpy.ops.object.select_all(action='SELECT')
+    bpy.ops.object.delete()
 
-    mod_subsurf = so.modifiers.new("My Modifier", "SUBSURF")
-    mod_subsurf.levels = 3
+    # Delete all materials
+    for material in bpy.data.materials:
+        bpy.data.materials.remove(material)
 
-    bpy.ops.object.shade_smooth()
+    # Delete all textures
+    for texture in bpy.data.textures:
+        bpy.data.textures.remove(texture)
 
-    mod_displace = so.modifiers.new("Displacement", "DISPLACE")
-    mod_displace.strength = 0.3
-
-    new_tex = bpy.data.textures.new("texture", "DISTORTED_NOISE")
-    new_tex.noise_scale = 0.5
-
-    mod_displace.texture = new_tex
-
-    # add material
-    new_material = bpy.data.materials.new(name = "My Material")
-    so.data.materials.append(new_material)
+def create_glowing_material():
+    new_material = bpy.data.materials.new(name = "GlowingMaterial")
 
     new_material.use_nodes = True
     nodes = new_material.node_tree.nodes
@@ -35,6 +31,30 @@ def create_glowing_object(size = 1, location = (0, 0, 0)):
 
     links = new_material.node_tree.links
     new_link = links.new(node_emission.outputs[0], material_output.inputs[0])
+    
+    return new_material
+
+def create_glowing_object(material, size = 1, location = (0, 0, 0)):
+    bpy.ops.mesh.primitive_cube_add(size=size, location=location)
+    so = bpy.context.active_object
+
+    so.rotation_euler[0] = 5
+
+    mod_subsurf = so.modifiers.new("My Modifier", "SUBSURF")
+    mod_subsurf.levels = 5
+
+    bpy.ops.object.shade_smooth()
+
+    mod_displace = so.modifiers.new("Displacement", "DISPLACE")
+    mod_displace.strength = 0.3
+
+    new_tex = bpy.data.textures.new("texture", "DISTORTED_NOISE")
+    new_tex.noise_scale = 0.5
+
+    mod_displace.texture = new_tex
+
+    # add material
+    so.data.materials.append(material)
 
 # add base plane
 def create_base_plane():
@@ -65,10 +85,14 @@ def create_base_plane():
     plane.data.materials.append(mat)
 
 if __name__ == '__main__':
+    remove_old_objects()
+    
+    glowing_material = create_glowing_material()
+    
     for i in range(20):
         x = random.random() * 100 - 50
         y = random.random() * 100 - 50
         
-        create_glowing_object(1, (x, y, 2))
+        create_glowing_object(glowing_material, 1, (x, y, 2))
     
     create_base_plane()
