@@ -17,6 +17,31 @@ def remove_old_objects():
     for texture in bpy.data.textures:
         bpy.data.textures.remove(texture)
 
+    # Armatures and Bone Groups
+    for armature in bpy.data.armatures:
+        bpy.data.armatures.remove(armature)
+
+    # Particles
+    for particle in bpy.data.particles:
+        bpy.data.particles.remove(particle)
+        
+    # Worlds
+    for world in bpy.data.worlds:
+        bpy.data.worlds.remove(world)
+
+    # Grease Pencils
+    for pencil in bpy.data.grease_pencils:
+        bpy.data.grease_pencils.remove(pencil)
+
+    # Cameras
+    for camera in bpy.data.cameras:
+        bpy.data.cameras.remove(camera)
+
+    # Lamps/Lights
+    for light in bpy.data.lights:
+        bpy.data.lights.remove(light)
+
+
 def create_glowing_material():
     new_material = bpy.data.materials.new(name = "GlowingMaterial")
 
@@ -84,6 +109,66 @@ def create_base_plane():
     # Assign the material to the plane
     plane.data.materials.append(mat)
 
+
+def add_world_background(exr_file_path):
+
+    # Load the image into Blender
+    image = bpy.data.images.load(exr_file_path)
+
+    # Check if the image is loaded correctly
+    if not image:
+        print("Failed to load the image!")
+        exit()
+
+    scene = bpy.context.scene
+    if not scene.world:
+        new_world = bpy.data.worlds.new(name="NewWorld")
+        scene.world = new_world
+
+    # Ensure the world uses nodes
+    scene.world.use_nodes = True
+
+    # Get the node tree of the world
+    node_tree = scene.world.node_tree
+
+    # Check for an existing Environment Texture node
+    environment_texture_node = next((node for node in node_tree.nodes if node.type == 'TEX_ENVIRONMENT'), None)
+
+    # If not found, create one
+    if not environment_texture_node:
+        environment_texture_node = node_tree.nodes.new(type='ShaderNodeTexEnvironment')
+
+    # Set the image to the node
+    environment_texture_node.image = image
+
+    # Check for an existing Background node
+    background_node = next((node for node in node_tree.nodes if node.type == 'BACKGROUND'), None)
+
+    # If not found, create one
+    if not background_node:
+        background_node = node_tree.nodes.new(type='ShaderNodeBackground')
+
+    # Connect the Environment Texture node to the Background node if not connected
+    if not environment_texture_node.outputs["Color"].links:
+        node_tree.links.new(
+            environment_texture_node.outputs["Color"],
+            background_node.inputs["Color"]
+        )
+
+    # Check for the Output node (World Output)
+    world_output_node = next((node for node in node_tree.nodes if node.type == 'OUTPUT_WORLD'), None)
+
+    # If not found, create one
+    if not world_output_node:
+        world_output_node = node_tree.nodes.new(type='ShaderNodeOutputWorld')
+
+    # Connect the Background node to the World Output node if not connected
+    if not background_node.outputs["Background"].links:
+        node_tree.links.new(
+            background_node.outputs["Background"],
+            world_output_node.inputs["Surface"]
+        )
+
 if __name__ == '__main__':
     remove_old_objects()
     
@@ -96,3 +181,6 @@ if __name__ == '__main__':
         create_glowing_object(glowing_material, 1, (x, y, 2))
     
     create_base_plane()
+    add_world_background("//promenade_de_vidy_4k.exr")
+
+
