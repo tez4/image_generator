@@ -5,7 +5,7 @@ from math import radians
 
 def remove_old_objects():
     # Ensure we're in Object mode
-    bpy.ops.object.mode_set(mode='OBJECT')
+    # bpy.ops.object.mode_set(mode='OBJECT')
 
     # Delete all objects
     bpy.ops.object.select_all(action='SELECT')
@@ -108,6 +108,45 @@ def add_asset():
     filepath = "./assets/interior_models/1000_plants_bundle.blend/Object/"
     bpy.ops.wm.append(directory=filepath, filename=name)
     bpy.data.objects[name].location = (0, 2, 0)
+
+
+def append_material_from_library(blend_path, material_name):
+    # Define the path to the material inside the .blend file
+    material_path = f"./assets/materials/{blend_path}/{blend_path}/Material/"
+
+    # Append the material
+    bpy.ops.wm.append(filename=material_name, directory=material_path)
+
+
+def add_materials():
+    materials = {
+        'brick_wall_02_4k.blend': 'brick_wall_02',
+        'concrete_wall_008_4k.blend': 'concrete_wall_008',
+        'laminate_floor_02_4k.blend': 'laminate_floor_02',
+    }
+
+    for key, value in materials.items():
+        append_material_from_library(key, value)
+
+    return materials
+
+
+def assign_material_to_object(obj, material_name):
+    # obj = bpy.data.objects[obj_name]
+    mat = bpy.data.materials[material_name]
+
+    # Check if object has a material slot, if not, create one
+    if not obj.material_slots:
+        bpy.ops.object.material_slot_add({'object': obj})
+
+    # Assign the material to the object's first material slot
+    obj.material_slots[0].material = mat
+
+
+def create_floor(material):
+    bpy.ops.mesh.primitive_cube_add(size=5, location=(0, 0, 0))
+    so = bpy.context.active_object
+    assign_material_to_object(so, material)
 
 
 def create_base_plane():
@@ -270,6 +309,9 @@ def run_main():
 
     # find_assets()
     add_asset()
+
+    available_materials = add_materials()
+    create_floor(list(available_materials.values())[2])
 
     add_camera()
     create_base_plane()
