@@ -1,6 +1,7 @@
 import bpy
 import random
 
+
 def remove_old_objects():
     # Ensure we're in Object mode
     bpy.ops.object.mode_set(mode='OBJECT')
@@ -24,7 +25,7 @@ def remove_old_objects():
     # Particles
     for particle in bpy.data.particles:
         bpy.data.particles.remove(particle)
-        
+
     # Worlds
     for world in bpy.data.worlds:
         bpy.data.worlds.remove(world)
@@ -49,8 +50,9 @@ def remove_old_objects():
     for image in bpy.data.images:
         bpy.data.images.remove(image)
 
+
 def create_glowing_material():
-    new_material = bpy.data.materials.new(name = "GlowingMaterial")
+    new_material = bpy.data.materials.new(name="GlowingMaterial")
 
     new_material.use_nodes = True
     nodes = new_material.node_tree.nodes
@@ -62,11 +64,12 @@ def create_glowing_material():
     node_emission.inputs[1].default_value = 500.0
 
     links = new_material.node_tree.links
-    new_link = links.new(node_emission.outputs[0], material_output.inputs[0])
-    
+    links.new(node_emission.outputs[0], material_output.inputs[0])
+
     return new_material
 
-def create_glowing_object(material, size = 1, location = (0, 0, 0)):
+
+def create_glowing_object(material, size=1, location=(0, 0, 0)):
     bpy.ops.mesh.primitive_cube_add(size=size, location=location)
     so = bpy.context.active_object
 
@@ -88,9 +91,11 @@ def create_glowing_object(material, size = 1, location = (0, 0, 0)):
     # add material
     so.data.materials.append(material)
 
-# add base plane
+
 def create_base_plane():
-    bpy.ops.mesh.primitive_plane_add(size=250, enter_editmode=False, align='WORLD', location=(0, 0, 0), scale=(1, 1, 1))
+    # add base plane
+    bpy.ops.mesh.primitive_plane_add(
+        size=250, enter_editmode=False, align='WORLD', location=(0, 0, 0), scale=(1, 1, 1))
     plane = bpy.context.active_object
 
     mat = bpy.data.materials.new(name="GlossyWhite")
@@ -103,15 +108,16 @@ def create_base_plane():
         nodes.remove(node)
 
     glossy_shader = nodes.new(type='ShaderNodeBsdfGlossy')
-    glossy_shader.location = (0,0)
+    glossy_shader.location = (0, 0)
 
     glossy_shader.inputs["Color"].default_value = (1, 1, 1, 1)  # RGB + Alpha
     glossy_shader.inputs["Roughness"].default_value = 0.1  # Adjust as needed
 
     # Add a Material Output node and connect the Glossy shader to it
     material_output = nodes.new(type='ShaderNodeOutputMaterial')
-    material_output.location = (400,0)
-    mat.node_tree.links.new(glossy_shader.outputs["BSDF"], material_output.inputs["Surface"])
+    material_output.location = (400, 0)
+    mat.node_tree.links.new(
+        glossy_shader.outputs["BSDF"], material_output.inputs["Surface"])
 
     # Assign the material to the plane
     plane.data.materials.append(mat)
@@ -139,17 +145,20 @@ def add_world_background(exr_file_path):
     node_tree = scene.world.node_tree
 
     # Check for an existing Environment Texture node
-    environment_texture_node = next((node for node in node_tree.nodes if node.type == 'TEX_ENVIRONMENT'), None)
+    environment_texture_node = next(
+        (node for node in node_tree.nodes if node.type == 'TEX_ENVIRONMENT'), None)
 
     # If not found, create one
     if not environment_texture_node:
-        environment_texture_node = node_tree.nodes.new(type='ShaderNodeTexEnvironment')
+        environment_texture_node = node_tree.nodes.new(
+            type='ShaderNodeTexEnvironment')
 
     # Set the image to the node
     environment_texture_node.image = image
 
     # Check for an existing Background node
-    background_node = next((node for node in node_tree.nodes if node.type == 'BACKGROUND'), None)
+    background_node = next(
+        (node for node in node_tree.nodes if node.type == 'BACKGROUND'), None)
 
     # If not found, create one
     if not background_node:
@@ -163,7 +172,8 @@ def add_world_background(exr_file_path):
         )
 
     # Check for the Output node (World Output)
-    world_output_node = next((node for node in node_tree.nodes if node.type == 'OUTPUT_WORLD'), None)
+    world_output_node = next(
+        (node for node in node_tree.nodes if node.type == 'OUTPUT_WORLD'), None)
 
     # If not found, create one
     if not world_output_node:
@@ -176,18 +186,20 @@ def add_world_background(exr_file_path):
             world_output_node.inputs["Surface"]
         )
 
-if __name__ == '__main__':
+
+def run_main():
     remove_old_objects()
-    
+
     glowing_material = create_glowing_material()
-    
+
     for i in range(20):
         x = random.random() * 100 - 50
         y = random.random() * 100 - 50
-        
+
         create_glowing_object(glowing_material, 1, (x, y, 2))
-    
+
     create_base_plane()
     add_world_background("//assets/resting_place_4k.exr")
 
 
+run_main()
