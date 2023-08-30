@@ -1,5 +1,6 @@
 import bpy
 import random
+from math import radians
 
 
 def remove_old_objects():
@@ -81,10 +82,10 @@ def create_glowing_object(material, size=1, location=(0, 0, 0)):
     bpy.ops.object.shade_smooth()
 
     mod_displace = so.modifiers.new("Displacement", "DISPLACE")
-    mod_displace.strength = 0.3
+    mod_displace.strength = 0.03 * size
 
     new_tex = bpy.data.textures.new("texture", "DISTORTED_NOISE")
-    new_tex.noise_scale = 0.5
+    new_tex.noise_scale = 0.05 * size
 
     mod_displace.texture = new_tex
 
@@ -187,19 +188,67 @@ def add_world_background(exr_file_path):
         )
 
 
+def customize_render_quality(show_background=False):
+
+    bpy.context.scene.render.film_transparent = not show_background
+
+    # Ambient Occlusion
+    bpy.context.scene.eevee.use_gtao = True
+    bpy.context.scene.eevee.gtao_distance = 1.0
+    bpy.context.scene.eevee.gtao_factor = 1.0
+    bpy.context.scene.eevee.gtao_quality = 0.25
+
+    # Bloom
+    bpy.context.scene.eevee.use_bloom = True
+    bpy.context.scene.eevee.bloom_threshold = 0.8
+    bpy.context.scene.eevee.bloom_intensity = 0.05
+
+    # Depth of Field (Assuming a camera is selected)
+
+    # Subsurface Scattering
+    bpy.context.scene.eevee.sss_samples = 10
+
+    # Screen Space Reflections
+    bpy.context.scene.eevee.use_ssr = True
+    bpy.context.scene.eevee.ssr_quality = 1.0
+    bpy.context.scene.eevee.ssr_thickness = 0.1
+    bpy.context.scene.eevee.ssr_border_fade = 0.1
+
+    # Shadows
+    bpy.context.scene.eevee.shadow_cube_size = '1024'
+    bpy.context.scene.eevee.shadow_cascade_size = '1024'
+    bpy.context.scene.eevee.use_shadow_high_bitdepth = True
+    bpy.context.scene.eevee.use_soft_shadows = True
+
+    # Enable volumetric
+    bpy.context.scene.eevee.use_volumetric_lights = True
+    bpy.context.scene.eevee.volumetric_samples = 64
+
+
+def add_camera():
+    bpy.ops.object.camera_add(location=(0, 0, 1), rotation=(radians(70), radians(0), radians(0)))
+    bpy.context.active_object.name = "ProductCamera"
+    bpy.context.active_object.data.dof.use_dof = True
+    bpy.context.active_object.data.dof.focus_distance = 2
+    bpy.context.active_object.data.dof.aperture_fstop = 0.8
+
+
 def run_main():
     remove_old_objects()
 
     glowing_material = create_glowing_material()
 
     for i in range(20):
-        x = random.random() * 100 - 50
-        y = random.random() * 100 - 50
+        z = random.random() * 0.2 + 0.2
+        x = random.random() - 0.5
+        y = random.random() + 1.5
 
-        create_glowing_object(glowing_material, 1, (x, y, 2))
+        create_glowing_object(glowing_material, 0.1, (x, y, z))
 
+    add_camera()
     create_base_plane()
     add_world_background("//assets/resting_place_4k.exr")
+    customize_render_quality(show_background=False)
 
 
 run_main()
