@@ -78,6 +78,7 @@ def create_glowing_object(material, size=1, location=(0, 0, 0)):
 
     mod_subsurf = so.modifiers.new("My Modifier", "SUBSURF")
     mod_subsurf.levels = 5
+    mod_subsurf.render_levels = 5
 
     bpy.ops.object.shade_smooth()
 
@@ -233,6 +234,12 @@ def add_camera():
     bpy.context.active_object.data.dof.aperture_fstop = 0.8
 
 
+def take_picture():
+    output_folder = '//output/'
+    bpy.context.scene.render.filepath = output_folder + "rendered_image.png"
+    bpy.ops.render.render(write_still=True)
+
+
 def run_main():
     remove_old_objects()
 
@@ -247,8 +254,10 @@ def run_main():
 
     add_camera()
     create_base_plane()
-    add_world_background("//assets/resting_place_4k.exr")
+    add_world_background("//assets/background/abandoned_slipway_4k.exr")
     customize_render_quality(show_background=False)
+
+    take_picture()
 
 
 run_main()
