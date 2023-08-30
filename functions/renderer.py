@@ -94,6 +94,22 @@ def create_glowing_object(material, size=1, location=(0, 0, 0)):
     so.data.materials.append(material)
 
 
+def find_assets():
+    blend_file_path = "//assets/interior_models/1000_plants_bundle.blend"
+
+    # Read the .blend file
+    with bpy.data.libraries.load(blend_file_path, link=False) as (data_from, _):
+        for value in data_from.objects:
+            print(value)
+
+
+def add_asset():
+    name = 'plant_24'
+    filepath = "./assets/interior_models/1000_plants_bundle.blend/Object/"
+    bpy.ops.wm.append(directory=filepath, filename=name)
+    bpy.data.objects[name].location = (0, 2, 0)
+
+
 def create_base_plane():
     # add base plane
     bpy.ops.mesh.primitive_plane_add(
@@ -229,9 +245,9 @@ def customize_render_quality(show_background=False):
 def add_camera():
     bpy.ops.object.camera_add(location=(0, 0, 1), rotation=(radians(70), radians(0), radians(0)))
     bpy.context.active_object.name = "ProductCamera"
-    bpy.context.active_object.data.dof.use_dof = True
-    bpy.context.active_object.data.dof.focus_distance = 2
-    bpy.context.active_object.data.dof.aperture_fstop = 0.8
+    # bpy.context.active_object.data.dof.use_dof = True
+    # bpy.context.active_object.data.dof.focus_distance = 2
+    # bpy.context.active_object.data.dof.aperture_fstop = 0.8
 
 
 def take_picture():
@@ -243,14 +259,17 @@ def take_picture():
 def run_main():
     remove_old_objects()
 
-    glowing_material = create_glowing_material()
+    # glowing_material = create_glowing_material()
 
-    for i in range(20):
-        z = random.random() * 0.2 + 0.2
-        x = random.random() - 0.5
-        y = random.random() + 1.5
+    # for i in range(20):
+    #     z = random.random() * 0.2 + 0.2
+    #     x = random.random() - 0.5
+    #     y = random.random() + 1.5
 
-        create_glowing_object(glowing_material, 0.1, (x, y, z))
+    #     create_glowing_object(glowing_material, 0.1, (x, y, z))
+
+    # find_assets()
+    add_asset()
 
     add_camera()
     create_base_plane()
