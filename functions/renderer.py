@@ -154,9 +154,28 @@ def create_floor(material_key):
     # assign_material_to_object(so, material)
 
 
+def convert_coords(dead_axis='z', dead_coord=0, bottom_left=(0, 0), top_right=(1, 1)):
+    bottom_right = (top_right[0], bottom_left[1])
+    top_left = (bottom_left[0], top_right[1])
+
+    coords = []
+    for coordinate in [bottom_left, bottom_right, top_right, top_left]:
+        if dead_axis == 'z':
+            coordinate = (coordinate[0], coordinate[1], dead_coord)
+        elif dead_axis == 'y':
+            coordinate = (coordinate[0], dead_coord, coordinate[1])
+        elif dead_axis == 'x':
+            coordinate = (dead_coord, coordinate[0], coordinate[1])
+
+        coords.append(coordinate)
+
+    return coords
+
+
 def create_plane_from_coords(coords):
+
     if len(coords) != 4:
-        print("Error: Need exactly 4 corner coordinates")
+        print("Error: Need exactly 4 corner coordinates. bottom left and top right.")
         return
 
     # create names
@@ -354,12 +373,13 @@ def run_main():
 
     # available_materials = add_materials()
 
-    coords = [
-        (-1, 0, 0),  # bottom left
-        (1, 0, 0),  # bottom right
-        (1, 3, 0),  # top right
-        (-1, 3, 0)   # top left
-    ]
+    coords = convert_coords(dead_axis='z', dead_coord=0, bottom_left=(-1, 0), top_right=(1, 3))
+    create_plane_from_coords(coords)
+
+    coords = convert_coords(dead_axis='y', dead_coord=3, bottom_left=(-1, 0), top_right=(1, 2))
+    create_plane_from_coords(coords)
+
+    coords = convert_coords(dead_axis='x', dead_coord=-1, bottom_left=(0, 0), top_right=(3, 2))
     create_plane_from_coords(coords)
     # create_floor(list(available_materials.values())[2])
 
