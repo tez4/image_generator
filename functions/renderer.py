@@ -132,8 +132,8 @@ def add_materials():
     return materials
 
 
-def assign_material_to_object(obj, material_name):
-    # obj = bpy.data.objects[obj_name]
+def assign_material_to_object(obj_name, material_name):
+    obj = bpy.data.objects[obj_name]
     mat = bpy.data.materials[material_name]
 
     # Check if object has a material slot, if not, create one
@@ -159,22 +159,36 @@ def create_plane_from_coords(coords):
         print("Error: Need exactly 4 corner coordinates")
         return
 
+    # create names
     object_id = uuid.uuid4().int
+    mesh_name = f"Plane_{object_id}"
+    obj_name = f"Plane_Object_{object_id}"
+    material_name = f'material_{object_id}'
 
     # Create a new mesh
-    mesh = bpy.data.meshes.new(name=f"Custom_Plane_{object_id}")
-    obj = bpy.data.objects.new(f"Custom_Plane_Object_{object_id}", mesh)
-
-    # Link the object to the scene
+    mesh = bpy.data.meshes.new(name=mesh_name)
+    obj = bpy.data.objects.new(obj_name, mesh)
     bpy.context.collection.objects.link(obj)
-    bpy.context.view_layer.objects.active = obj
-    obj.select_set(True)
+
+    # Make sure nothing is selected, then select the object by its name
+    bpy.ops.object.select_all(action='DESELECT')
+    bpy.data.objects[obj_name].select_set(True)
+    bpy.context.view_layer.objects.active = bpy.data.objects[obj_name]
 
     # Create the vertices and faces
     mesh.from_pydata(coords, [], [(0, 1, 2, 3)])
-
-    # Update mesh with new data
     mesh.update()
+
+    # UV unwrap the mesh
+    bpy.ops.object.mode_set(mode='EDIT')
+    bpy.ops.mesh.select_all(action='SELECT')
+    bpy.ops.uv.unwrap(method='ANGLE_BASED', margin=0.001)
+    bpy.ops.object.mode_set(mode='OBJECT')
+
+    # add material from library
+    append_material_from_library('laminate_floor_02_4k.blend', 'laminate_floor_02')
+    bpy.data.materials['laminate_floor_02'].name = material_name
+    assign_material_to_object(obj_name, material_name)
 
 
 def create_base_plane():
@@ -338,7 +352,8 @@ def run_main():
     # find_assets()
     add_asset()
 
-    available_materials = add_materials()
+    # available_materials = add_materials()
+
     coords = [
         (-1, 0, 0),  # bottom left
         (1, 0, 0),  # bottom right
