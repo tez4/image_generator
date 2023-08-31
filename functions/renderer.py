@@ -1,11 +1,12 @@
 import bpy
+import uuid
 import random
 from math import radians
 
 
 def remove_old_objects():
     # Ensure we're in Object mode
-    # bpy.ops.object.mode_set(mode='OBJECT')
+    bpy.ops.object.mode_set(mode='OBJECT')
 
     # Delete all objects
     bpy.ops.object.select_all(action='SELECT')
@@ -143,10 +144,37 @@ def assign_material_to_object(obj, material_name):
     obj.material_slots[0].material = mat
 
 
-def create_floor(material):
-    bpy.ops.mesh.primitive_cube_add(size=5, location=(0, 0, 0))
-    so = bpy.context.active_object
-    assign_material_to_object(so, material)
+def create_floor(material_key):
+    object_id = uuid.uuid4().int
+    bpy.ops.mesh.primitive_plane_add(size=1, location=(0, 0, 0))
+    bpy.data.objects['Plane'].name = f'Plane_{object_id}'
+    # so.scale = (3, 7, 1)
+
+    # bpy.ops.mesh.primitive_cube_add(size=1, location=(0, 0, 0), scale=(7, 7, 0.3))
+    # assign_material_to_object(so, material)
+
+
+def create_plane_from_coords(coords):
+    if len(coords) != 4:
+        print("Error: Need exactly 4 corner coordinates")
+        return
+
+    object_id = uuid.uuid4().int
+
+    # Create a new mesh
+    mesh = bpy.data.meshes.new(name=f"Custom_Plane_{object_id}")
+    obj = bpy.data.objects.new(f"Custom_Plane_Object_{object_id}", mesh)
+
+    # Link the object to the scene
+    bpy.context.collection.objects.link(obj)
+    bpy.context.view_layer.objects.active = obj
+    obj.select_set(True)
+
+    # Create the vertices and faces
+    mesh.from_pydata(coords, [], [(0, 1, 2, 3)])
+
+    # Update mesh with new data
+    mesh.update()
 
 
 def create_base_plane():
@@ -311,10 +339,17 @@ def run_main():
     add_asset()
 
     available_materials = add_materials()
-    create_floor(list(available_materials.values())[2])
+    coords = [
+        (-1, 0, 0),  # bottom left
+        (1, 0, 0),  # bottom right
+        (1, 3, 0),  # top right
+        (-1, 3, 0)   # top left
+    ]
+    create_plane_from_coords(coords)
+    # create_floor(list(available_materials.values())[2])
 
     add_camera()
-    create_base_plane()
+    # create_base_plane()
     add_world_background("//assets/background/abandoned_slipway_4k.exr")
     customize_render_quality(show_background=False)
 
