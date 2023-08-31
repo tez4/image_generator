@@ -172,11 +172,8 @@ def convert_coords(dead_axis='z', dead_coord=0, bottom_left=(0, 0), top_right=(1
     return coords
 
 
-def create_plane_from_coords(coords):
-
-    if len(coords) != 4:
-        print("Error: Need exactly 4 corner coordinates. bottom left and top right.")
-        return
+def create_plane_from_coords(dead_axis, dead_coord, bottom_left, top_right):
+    coords = convert_coords(dead_axis, dead_coord, bottom_left, top_right)
 
     # create names
     object_id = uuid.uuid4().int
@@ -208,6 +205,13 @@ def create_plane_from_coords(coords):
     append_material_from_library('laminate_floor_02_4k.blend', 'laminate_floor_02')
     bpy.data.materials['laminate_floor_02'].name = material_name
     assign_material_to_object(obj_name, material_name)
+
+    mat = bpy.data.materials[material_name]
+    nodes = mat.node_tree.nodes
+    mapping_node = nodes.get('Mapping')
+    x_scale = abs(top_right[0] - bottom_left[0])
+    y_scale = abs(top_right[1] - bottom_left[1])
+    mapping_node.inputs['Scale'].default_value = (x_scale, y_scale, 1.0)
 
 
 def create_base_plane():
@@ -373,14 +377,9 @@ def run_main():
 
     # available_materials = add_materials()
 
-    coords = convert_coords(dead_axis='z', dead_coord=0, bottom_left=(-1, 0), top_right=(1, 3))
-    create_plane_from_coords(coords)
-
-    coords = convert_coords(dead_axis='y', dead_coord=3, bottom_left=(-1, 0), top_right=(1, 2))
-    create_plane_from_coords(coords)
-
-    coords = convert_coords(dead_axis='x', dead_coord=-1, bottom_left=(0, 0), top_right=(3, 2))
-    create_plane_from_coords(coords)
+    create_plane_from_coords(dead_axis='z', dead_coord=0, bottom_left=(-1, 0), top_right=(1, 3))
+    create_plane_from_coords(dead_axis='y', dead_coord=3, bottom_left=(-1, 0), top_right=(1, 2))
+    create_plane_from_coords(dead_axis='x', dead_coord=-1, bottom_left=(0, 0), top_right=(3, 2))
     # create_floor(list(available_materials.values())[2])
 
     add_camera()
