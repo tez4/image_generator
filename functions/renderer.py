@@ -141,16 +141,6 @@ def assign_material_to_object(obj_name, material_name):
     obj.material_slots[0].material = mat
 
 
-def create_floor(material_key):
-    object_id = uuid.uuid4().int
-    bpy.ops.mesh.primitive_plane_add(size=1, location=(0, 0, 0))
-    bpy.data.objects['Plane'].name = f'Plane_{object_id}'
-    # so.scale = (3, 7, 1)
-
-    # bpy.ops.mesh.primitive_cube_add(size=1, location=(0, 0, 0), scale=(7, 7, 0.3))
-    # assign_material_to_object(so, material)
-
-
 def convert_coords(dead_axis='z', dead_coord=0, bottom_left=(0, 0), top_right=(1, 1)):
     bottom_right = (top_right[0], bottom_left[1])
     top_left = (bottom_left[0], top_right[1])
@@ -197,6 +187,11 @@ def create_plane_from_coords(dead_axis, dead_coord, bottom_left, top_right, mate
     bpy.ops.mesh.select_all(action='SELECT')
     bpy.ops.uv.unwrap(method='ANGLE_BASED', margin=0.001)
     bpy.ops.object.mode_set(mode='OBJECT')
+
+    mod_subsurf = obj.modifiers.new("Subdivision Modifier", "SUBSURF")
+    mod_subsurf.subdivision_type = 'SIMPLE0'
+    mod_subsurf.levels = 6
+    mod_subsurf.render_levels = 6
 
     # add material from library
     append_material_from_library(material_key, material_value)
