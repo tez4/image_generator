@@ -1,7 +1,7 @@
 import bpy
 import uuid
 import random
-from math import radians, atan2
+from math import radians, atan2, sqrt, acos, degrees
 
 
 def remove_old_objects():
@@ -336,54 +336,81 @@ def get_asset_size(obj_name='plant_24'):
     return (max_x - min_x, max_y - min_y, max_z - min_z)
 
 
-def customize_render_quality(show_background=False):
+def customize_render_quality(show_background=False, high_quality=True, image_size=1024):
+    bpy.data.scenes['Scene'].render.resolution_x = image_size
+    bpy.data.scenes['Scene'].render.resolution_y = image_size
 
-    bpy.context.scene.render.film_transparent = not show_background
+    if high_quality:
+        bpy.data.scenes['Scene'].render.engine = 'CYCLES'
+    else:
+        bpy.context.scene.render.film_transparent = not show_background
 
-    # Ambient Occlusion
-    bpy.context.scene.eevee.use_gtao = True
-    bpy.context.scene.eevee.gtao_distance = 1.0
-    bpy.context.scene.eevee.gtao_factor = 1.0
-    bpy.context.scene.eevee.gtao_quality = 0.25
+        # Ambient Occlusion
+        bpy.context.scene.eevee.use_gtao = True
+        bpy.context.scene.eevee.gtao_distance = 1.0
+        bpy.context.scene.eevee.gtao_factor = 1.0
+        bpy.context.scene.eevee.gtao_quality = 0.25
 
-    # Bloom
-    bpy.context.scene.eevee.use_bloom = True
-    bpy.context.scene.eevee.bloom_threshold = 0.8
-    bpy.context.scene.eevee.bloom_intensity = 0.05
+        # Bloom
+        bpy.context.scene.eevee.use_bloom = True
+        bpy.context.scene.eevee.bloom_threshold = 0.8
+        bpy.context.scene.eevee.bloom_intensity = 0.05
 
-    # Depth of Field (Assuming a camera is selected)
+        # Depth of Field (Assuming a camera is selected)
 
-    # Subsurface Scattering
-    bpy.context.scene.eevee.sss_samples = 10
+        # Subsurface Scattering
+        bpy.context.scene.eevee.sss_samples = 10
 
-    # Screen Space Reflections
-    bpy.context.scene.eevee.use_ssr = True
-    bpy.context.scene.eevee.ssr_quality = 1.0
-    bpy.context.scene.eevee.ssr_thickness = 0.1
-    bpy.context.scene.eevee.ssr_border_fade = 0.1
+        # Screen Space Reflections
+        bpy.context.scene.eevee.use_ssr = True
+        bpy.context.scene.eevee.ssr_quality = 1.0
+        bpy.context.scene.eevee.ssr_thickness = 0.1
+        bpy.context.scene.eevee.ssr_border_fade = 0.1
 
-    # Shadows
-    bpy.context.scene.eevee.shadow_cube_size = '1024'
-    bpy.context.scene.eevee.shadow_cascade_size = '1024'
-    bpy.context.scene.eevee.use_shadow_high_bitdepth = True
-    bpy.context.scene.eevee.use_soft_shadows = True
+        # Shadows
+        bpy.context.scene.eevee.shadow_cube_size = '1024'
+        bpy.context.scene.eevee.shadow_cascade_size = '1024'
+        bpy.context.scene.eevee.use_shadow_high_bitdepth = True
+        bpy.context.scene.eevee.use_soft_shadows = True
 
-    # Enable volumetric
-    bpy.context.scene.eevee.use_volumetric_lights = True
-    bpy.context.scene.eevee.volumetric_samples = 64
+        # Enable volumetric
+        bpy.context.scene.eevee.use_volumetric_lights = True
+        bpy.context.scene.eevee.volumetric_samples = 64
+
+
+def angle_of_vectors(a, b):
+    a_x, a_y = a
+    b_x, b_y = b
+    dot_product = a_x * b_x + a_y * b_y
+    mod = sqrt(a_x * a_x + a_y * a_y) * sqrt(b_x * b_x + b_y * b_y)
+    return acos(dot_product / mod)
 
 
 def add_camera(asset_size):
     x, y, z = asset_size
-    y_coordinate = -((y / 2) + (max(x, z) * (1 + random.random() * 2)))
-    z_coordinate = min(max((z * 0.4) + (random.random() * z * 1.1), 0.3), 1.8)
-    angle = atan2(abs(y_coordinate), z_coordinate - (z / 2))
+    y_camera = -((y / 2) + (max(x, z) * (1 + random.random() * 2)))
+    z_camera = min(max((z * 0.2) + (random.random() * z * 1.3), 0.3), 1.8)
+    angle = atan2(abs(y_camera), z_camera - (z / 2))
+    distance = (abs(y_camera) ** 2 + (z_camera - (z / 2)) ** 2) ** 0.5
 
-    bpy.ops.object.camera_add(location=(0, y_coordinate, z_coordinate), rotation=(angle, 0, 0))
+    camera_position = (0, y_camera, z_camera)
+    bpy.ops.object.camera_add(location=camera_position, rotation=(angle, 0, 0))
     bpy.context.active_object.name = "ProductCamera"
+
+    z_fov_angle = atan2(z / 2, distance)
+    x_fov_angle = angle_of_vectors(
+        (abs(y_camera), z_camera - (z / 2)),
+        (abs(y_camera) - (y / 2), z_camera)
+    )
+    fov_angle = max(z_fov_angle, x_fov_angle)
+
+    bpy.data.cameras['Camera'].lens_unit = 'FOV'
+    bpy.data.cameras['Camera'].angle = fov_angle * 2
     # bpy.context.active_object.data.dof.use_dof = True
     # bpy.context.active_object.data.dof.focus_distance = 2
     # bpy.context.active_object.data.dof.aperture_fstop = 0.8
+
+    return camera_position, distance
 
 
 def take_picture():
@@ -408,20 +435,21 @@ def run_main():
     add_asset()
     asset_size = get_asset_size()
     print(asset_size)
-    add_camera(asset_size)
+    camera_position, distance = add_camera(asset_size)
+    print(f'cam at: {camera_position} with distance {distance}')
 
-    mats = get_materials_dictionary()
+    # mats = get_materials_dictionary()
 
-    create_plane_from_coords('z', 0, (-1, -2), (1, 1), False, list(mats.keys())[2], mats[list(mats.keys())[2]])
-    create_plane_from_coords('z', 2, (-1, -2), (1, 1), True, list(mats.keys())[2], mats[list(mats.keys())[2]])
-    create_plane_from_coords('y', 1, (-1, 0), (1, 2), False, list(mats.keys())[1], mats[list(mats.keys())[1]])
-    create_plane_from_coords('x', -1, (-2, 0), (1, 2), False, list(mats.keys())[0], mats[list(mats.keys())[0]])
-    create_plane_from_coords('x', 1, (0, 0), (1, 2), True, list(mats.keys())[1], mats[list(mats.keys())[1]])
+    # create_plane_from_coords('z', 0, (-1, -2), (1, 1), False, list(mats.keys())[2], mats[list(mats.keys())[2]])
+    # create_plane_from_coords('z', 2, (-1, -2), (1, 1), True, list(mats.keys())[2], mats[list(mats.keys())[2]])
+    # create_plane_from_coords('y', 1, (-1, 0), (1, 2), False, list(mats.keys())[1], mats[list(mats.keys())[1]])
+    # create_plane_from_coords('x', -1, (-2, 0), (1, 2), False, list(mats.keys())[0], mats[list(mats.keys())[0]])
+    # create_plane_from_coords('x', 1, (0, 0), (1, 2), True, list(mats.keys())[1], mats[list(mats.keys())[1]])
 
     # create_base_plane()
     # hdri = ['cloudy_vondelpark_4k', 'abandoned_slipway_4k']
     add_world_background("//assets/background/dreifaltigkeitsberg_4k.exr")
-    customize_render_quality(show_background=True)
+    customize_render_quality(show_background=False, high_quality=False)
 
     take_picture()
 
