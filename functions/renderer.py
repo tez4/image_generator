@@ -1,3 +1,4 @@
+import os
 import bpy
 import uuid
 import random
@@ -49,8 +50,8 @@ def remove_old_objects():
         bpy.data.meshes.remove(mesh)
 
     # Images
-    for image in bpy.data.images:
-        bpy.data.images.remove(image)
+    # for image in bpy.data.images:
+    #     bpy.data.images.remove(image)
 
 
 def create_glowing_material():
@@ -95,18 +96,18 @@ def create_glowing_object(material, size=1, location=(0, 0, 0)):
     so.data.materials.append(material)
 
 
-def find_assets():
-    blend_file_path = "//assets/interior_models/1000_plants_bundle.blend"
+def find_assets(blend_file_path="//assets/interior_models/1000_plants_bundle.blend"):
+    assets = []
 
     # Read the .blend file
     with bpy.data.libraries.load(blend_file_path, link=False) as (data_from, _):
         for value in data_from.objects:
-            print(value)
+            assets.append(value)
+
+    return assets
 
 
-def add_asset():
-    name = 'plant_24'
-    filepath = "./assets/interior_models/1000_plants_bundle.blend/Object/"
+def add_asset(filepath="./assets/interior_models/1000_plants_bundle.blend/Object/", name='plant_24'):
     bpy.ops.wm.append(directory=filepath, filename=name)
     obj = bpy.data.objects[name]
     obj.location = (0, 0, 0)
@@ -413,45 +414,44 @@ def add_camera(asset_size):
     return camera_position, distance
 
 
-def take_picture():
-    output_folder = '//output/'
-    bpy.context.scene.render.filepath = output_folder + "rendered_image.png"
+def take_picture(folder, image_name):
+    folder_path = f'./output/{folder}'
+    if not os.path.exists(folder_path):
+        os.makedirs(folder_path)
+
+    bpy.context.scene.render.filepath = f'//output/{folder}/{image_name}.png'
     bpy.ops.render.render(write_still=True)
+    # bpy.data.images.remove(bpy.data.images['Render Result'])
 
 
 def run_main():
     remove_old_objects()
 
-    # glowing_material = create_glowing_material()
+    assets = find_assets("//assets/interior_models/1000_plants_bundle.blend")
+    for i, asset in enumerate(assets):
+        add_asset("./assets/interior_models/1000_plants_bundle.blend/Object/", asset)
+        asset_size = get_asset_size(asset)
+        print(asset_size)
+        camera_position, distance = add_camera(asset_size)
+        print(f'cam at: {camera_position} with distance {distance}')
 
-    # for i in range(20):
-    #     z = random.random() * 0.2 + 0.2
-    #     x = random.random() - 0.5
-    #     y = random.random() + 1.5
+        # mats = get_materials_dictionary()
 
-    #     create_glowing_object(glowing_material, 0.1, (x, y, z))
+        # create_plane_from_coords('z', 0, (-1, -2), (1, 1), False, list(mats.keys())[2], mats[list(mats.keys())[2]])
+        # create_plane_from_coords('z', 2, (-1, -2), (1, 1), True, list(mats.keys())[2], mats[list(mats.keys())[2]])
+        # create_plane_from_coords('y', 1, (-1, 0), (1, 2), False, list(mats.keys())[1], mats[list(mats.keys())[1]])
+        # create_plane_from_coords('x', -1, (-2, 0), (1, 2), False, list(mats.keys())[0], mats[list(mats.keys())[0]])
+        # create_plane_from_coords('x', 1, (0, 0), (1, 2), True, list(mats.keys())[1], mats[list(mats.keys())[1]])
 
-    # find_assets()
-    add_asset()
-    asset_size = get_asset_size()
-    print(asset_size)
-    camera_position, distance = add_camera(asset_size)
-    print(f'cam at: {camera_position} with distance {distance}')
+        # create_base_plane()
+        # hdri = ['cloudy_vondelpark_4k', 'abandoned_slipway_4k']
+        add_world_background("//assets/background/dreifaltigkeitsberg_4k.exr")
+        customize_render_quality(show_background=False, high_quality=False)
 
-    # mats = get_materials_dictionary()
+        take_picture('experiment_4', f'{i}___{asset}')
+        remove_old_objects()
 
-    # create_plane_from_coords('z', 0, (-1, -2), (1, 1), False, list(mats.keys())[2], mats[list(mats.keys())[2]])
-    # create_plane_from_coords('z', 2, (-1, -2), (1, 1), True, list(mats.keys())[2], mats[list(mats.keys())[2]])
-    # create_plane_from_coords('y', 1, (-1, 0), (1, 2), False, list(mats.keys())[1], mats[list(mats.keys())[1]])
-    # create_plane_from_coords('x', -1, (-2, 0), (1, 2), False, list(mats.keys())[0], mats[list(mats.keys())[0]])
-    # create_plane_from_coords('x', 1, (0, 0), (1, 2), True, list(mats.keys())[1], mats[list(mats.keys())[1]])
-
-    # create_base_plane()
-    # hdri = ['cloudy_vondelpark_4k', 'abandoned_slipway_4k']
-    add_world_background("//assets/background/dreifaltigkeitsberg_4k.exr")
-    customize_render_quality(show_background=False, high_quality=False)
-
-    take_picture()
+    print('Done!')
 
 
 run_main()
