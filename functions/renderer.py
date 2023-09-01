@@ -2,6 +2,7 @@ import os
 import bpy
 import uuid
 import random
+import mathutils
 from math import radians, atan2, sqrt, acos, degrees
 
 
@@ -315,24 +316,17 @@ def get_asset_size(obj_name='plant_24'):
 
     obj = bpy.data.objects[obj_name]
 
-    min_x = max_x = obj.data.vertices[0].co.x
-    min_y = max_y = obj.data.vertices[0].co.y
-    min_z = max_z = obj.data.vertices[0].co.z
+    bpy.context.view_layer.update()
 
-    # Loop through all the vertices and update the min and max values
-    for v in obj.data.vertices:
-        if v.co.x < min_x:
-            min_x = v.co.x
-        if v.co.x > max_x:
-            max_x = v.co.x
-        if v.co.y < min_y:
-            min_y = v.co.y
-        if v.co.y > max_y:
-            max_y = v.co.y
-        if v.co.z < min_z:
-            min_z = v.co.z
-        if v.co.z > max_z:
-            max_z = v.co.z
+    global_bbox_corners = [obj.matrix_world @ mathutils.Vector(corner) for corner in obj.bound_box]
+
+    x_values = [coord.x for coord in global_bbox_corners]
+    y_values = [coord.y for coord in global_bbox_corners]
+    z_values = [coord.z for coord in global_bbox_corners]
+
+    min_x, max_x = min(x_values), max(x_values)
+    min_y, max_y = min(y_values), max(y_values)
+    min_z, max_z = min(z_values), max(z_values)
 
     return (max_x - min_x, max_y - min_y, max_z - min_z)
 
@@ -400,8 +394,8 @@ def add_camera(asset_size):
     bpy.ops.object.camera_add(location=camera_position, rotation=(angle, 0, 0))
     bpy.context.active_object.name = "ProductCamera"
 
-    z_fov_angle = atan2(z / 2, distance)
-    x_fov_angle = angle_of_vectors(
+    x_fov_angle = atan2(x / 2, abs(y_camera) - (y / 2))
+    z_fov_angle = angle_of_vectors(
         (abs(y_camera), z_camera - (z / 2)),
         (abs(y_camera) - (y / 2), z_camera)
     )
@@ -453,7 +447,7 @@ def run_main():
         # hdri = ['cloudy_vondelpark_4k', 'abandoned_slipway_4k']
         add_world_background("//assets/background/dreifaltigkeitsberg_4k.exr")
 
-        take_picture('experiment_5', f'{i}___{asset}')
+        take_picture('experiment_7', f'{i}___{asset}')
 
     print('Done!')
 
