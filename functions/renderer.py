@@ -254,7 +254,7 @@ def add_world_background(exr_file_path):
 
     # Check if the image is loaded correctly
     if not image:
-        print("Failed to load the image!")
+        print("Failed to load the exr image!")
         exit()
 
     scene = bpy.context.scene
@@ -338,6 +338,8 @@ def get_asset_size(obj_name='plant_24'):
 
 
 def customize_render_quality(show_background=False, high_quality=True, image_size=1024):
+    if 'Scene' not in bpy.data.scenes:
+        print('Error! No scene named "Scene". Error happened in customize_render_quality()')
     bpy.data.scenes['Scene'].render.resolution_x = image_size
     bpy.data.scenes['Scene'].render.resolution_y = image_size
 
@@ -405,6 +407,9 @@ def add_camera(asset_size):
     )
     fov_angle = max(z_fov_angle, x_fov_angle)
 
+    if 'Camera' not in bpy.data.cameras:
+        print('Error! No camera named "Camera". Error happened in add_camera()')
+
     bpy.data.cameras['Camera'].lens_unit = 'FOV'
     bpy.data.cameras['Camera'].angle = fov_angle * 2
     # bpy.context.active_object.data.dof.use_dof = True
@@ -425,10 +430,11 @@ def take_picture(folder, image_name):
 
 
 def run_main():
-    remove_old_objects()
+    customize_render_quality(show_background=False, high_quality=False)
 
     assets = find_assets("//assets/interior_models/1000_plants_bundle.blend")
     for i, asset in enumerate(assets):
+        remove_old_objects()
         add_asset("./assets/interior_models/1000_plants_bundle.blend/Object/", asset)
         asset_size = get_asset_size(asset)
         print(asset_size)
@@ -446,10 +452,8 @@ def run_main():
         # create_base_plane()
         # hdri = ['cloudy_vondelpark_4k', 'abandoned_slipway_4k']
         add_world_background("//assets/background/dreifaltigkeitsberg_4k.exr")
-        customize_render_quality(show_background=False, high_quality=False)
 
-        take_picture('experiment_4', f'{i}___{asset}')
-        remove_old_objects()
+        take_picture('experiment_5', f'{i}___{asset}')
 
     print('Done!')
 
