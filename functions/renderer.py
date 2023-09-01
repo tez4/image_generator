@@ -308,6 +308,34 @@ def add_world_background(exr_file_path):
         )
 
 
+def get_asset_size(obj_name='plant_24'):
+
+    obj = bpy.data.objects[obj_name]
+
+    min_x = max_x = obj.data.vertices[0].co.x
+    min_y = max_y = obj.data.vertices[0].co.y
+    min_z = max_z = obj.data.vertices[0].co.z
+
+    # Loop through all the vertices and update the min and max values
+    for v in obj.data.vertices:
+        if v.co.x < min_x:
+            min_x = v.co.x
+        if v.co.x > max_x:
+            max_x = v.co.x
+        if v.co.y < min_y:
+            min_y = v.co.y
+        if v.co.y > max_y:
+            max_y = v.co.y
+        if v.co.z < min_z:
+            min_z = v.co.z
+        if v.co.z > max_z:
+            max_z = v.co.z
+
+    print("X:", min_x, max_x)
+    print("Y:", min_y, max_y)
+    print("Z:", min_z, max_z)
+
+
 def customize_render_quality(show_background=False):
 
     bpy.context.scene.render.film_transparent = not show_background
@@ -373,6 +401,7 @@ def run_main():
 
     # find_assets()
     add_asset()
+    get_asset_size()
 
     mats = get_materials_dictionary()
 
