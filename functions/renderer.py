@@ -108,7 +108,9 @@ def add_asset():
     name = 'plant_24'
     filepath = "./assets/interior_models/1000_plants_bundle.blend/Object/"
     bpy.ops.wm.append(directory=filepath, filename=name)
-    bpy.data.objects[name].location = (0, 2, 0)
+    obj = bpy.data.objects[name]
+    obj.location = (0, 0, 0)
+    obj.rotation_euler = (0, 0, radians(random.random() * 360))
 
 
 def append_material_from_library(blend_path, material_name):
@@ -374,7 +376,7 @@ def customize_render_quality(show_background=False):
 
 
 def add_camera():
-    bpy.ops.object.camera_add(location=(0, 0, 1), rotation=(radians(70), radians(0), radians(0)))
+    bpy.ops.object.camera_add(location=(0, -2, 1), rotation=(radians(70), radians(0), radians(0)))
     bpy.context.active_object.name = "ProductCamera"
     # bpy.context.active_object.data.dof.use_dof = True
     # bpy.context.active_object.data.dof.focus_distance = 2
@@ -405,11 +407,11 @@ def run_main():
 
     mats = get_materials_dictionary()
 
-    create_plane_from_coords('z', 0, (-1, 0), (1, 3), False, list(mats.keys())[2], mats[list(mats.keys())[2]])
-    create_plane_from_coords('z', 2, (-1, 0), (1, 3), True, list(mats.keys())[2], mats[list(mats.keys())[2]])
-    create_plane_from_coords('y', 3, (-1, 0), (1, 2), False, list(mats.keys())[1], mats[list(mats.keys())[1]])
-    create_plane_from_coords('x', -1, (0, 0), (3, 2), False, list(mats.keys())[0], mats[list(mats.keys())[0]])
-    create_plane_from_coords('x', 1, (2, 0), (3, 2), True, list(mats.keys())[1], mats[list(mats.keys())[1]])
+    create_plane_from_coords('z', 0, (-1, -2), (1, 1), False, list(mats.keys())[2], mats[list(mats.keys())[2]])
+    create_plane_from_coords('z', 2, (-1, -2), (1, 1), True, list(mats.keys())[2], mats[list(mats.keys())[2]])
+    create_plane_from_coords('y', 1, (-1, 0), (1, 2), False, list(mats.keys())[1], mats[list(mats.keys())[1]])
+    create_plane_from_coords('x', -1, (-2, 0), (1, 2), False, list(mats.keys())[0], mats[list(mats.keys())[0]])
+    create_plane_from_coords('x', 1, (0, 0), (1, 2), True, list(mats.keys())[1], mats[list(mats.keys())[1]])
     # create_floor(list(available_materials.values())[2])
 
     add_camera()
