@@ -1,7 +1,7 @@
 import bpy
 import uuid
 import random
-from math import radians
+from math import radians, atan2
 
 
 def remove_old_objects():
@@ -333,9 +333,7 @@ def get_asset_size(obj_name='plant_24'):
         if v.co.z > max_z:
             max_z = v.co.z
 
-    print("X:", min_x, max_x)
-    print("Y:", min_y, max_y)
-    print("Z:", min_z, max_z)
+    return (max_x - min_x, max_y - min_y, max_z - min_z)
 
 
 def customize_render_quality(show_background=False):
@@ -375,8 +373,13 @@ def customize_render_quality(show_background=False):
     bpy.context.scene.eevee.volumetric_samples = 64
 
 
-def add_camera():
-    bpy.ops.object.camera_add(location=(0, -2, 1), rotation=(radians(70), radians(0), radians(0)))
+def add_camera(asset_size):
+    x, y, z = asset_size
+    y_coordinate = -((y / 2) + (max(x, z) * (1 + random.random() * 2)))
+    z_coordinate = min(max((z * 0.4) + (random.random() * z * 1.1), 0.3), 1.8)
+    angle = atan2(abs(y_coordinate), z_coordinate - (z / 2))
+
+    bpy.ops.object.camera_add(location=(0, y_coordinate, z_coordinate), rotation=(angle, 0, 0))
     bpy.context.active_object.name = "ProductCamera"
     # bpy.context.active_object.data.dof.use_dof = True
     # bpy.context.active_object.data.dof.focus_distance = 2
@@ -403,7 +406,9 @@ def run_main():
 
     # find_assets()
     add_asset()
-    get_asset_size()
+    asset_size = get_asset_size()
+    print(asset_size)
+    add_camera(asset_size)
 
     mats = get_materials_dictionary()
 
@@ -412,9 +417,7 @@ def run_main():
     create_plane_from_coords('y', 1, (-1, 0), (1, 2), False, list(mats.keys())[1], mats[list(mats.keys())[1]])
     create_plane_from_coords('x', -1, (-2, 0), (1, 2), False, list(mats.keys())[0], mats[list(mats.keys())[0]])
     create_plane_from_coords('x', 1, (0, 0), (1, 2), True, list(mats.keys())[1], mats[list(mats.keys())[1]])
-    # create_floor(list(available_materials.values())[2])
 
-    add_camera()
     # create_base_plane()
     # hdri = ['cloudy_vondelpark_4k', 'abandoned_slipway_4k']
     add_world_background("//assets/background/dreifaltigkeitsberg_4k.exr")
