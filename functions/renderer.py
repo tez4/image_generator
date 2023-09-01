@@ -208,7 +208,11 @@ def create_plane_from_coords(dead_axis, dead_coord, bottom_left, top_right, mate
     mapping_node = nodes.get('Mapping')
     x_scale = abs(top_right[0] - bottom_left[0])
     y_scale = abs(top_right[1] - bottom_left[1])
-    mapping_node.inputs['Scale'].default_value = (x_scale, y_scale, 1.0)
+    if dead_axis == 'x':
+        mapping_node.inputs['Scale'].default_value = (y_scale, x_scale, 1.0)
+        mapping_node.inputs['Rotation'].default_value = (0, 0, radians(90))
+    else:
+        mapping_node.inputs['Scale'].default_value = (x_scale, y_scale, 1.0)
 
 
 def create_base_plane():
@@ -375,14 +379,17 @@ def run_main():
     mats = get_materials_dictionary()
 
     create_plane_from_coords('z', 0, (-1, 0), (1, 3), list(mats.keys())[2], mats[list(mats.keys())[2]])
+    create_plane_from_coords('z', 2, (-1, 0), (1, 3), list(mats.keys())[2], mats[list(mats.keys())[2]])
     create_plane_from_coords('y', 3, (-1, 0), (1, 2), list(mats.keys())[1], mats[list(mats.keys())[1]])
     create_plane_from_coords('x', -1, (0, 0), (3, 2), list(mats.keys())[0], mats[list(mats.keys())[0]])
+    create_plane_from_coords('x', 1, (2, 0), (3, 2), list(mats.keys())[1], mats[list(mats.keys())[1]])
     # create_floor(list(available_materials.values())[2])
 
     add_camera()
     # create_base_plane()
-    add_world_background("//assets/background/abandoned_slipway_4k.exr")
-    customize_render_quality(show_background=False)
+    # hdri = ['cloudy_vondelpark_4k', 'abandoned_slipway_4k']
+    add_world_background("//assets/background/dreifaltigkeitsberg_4k.exr")
+    customize_render_quality(show_background=True)
 
     take_picture()
 
