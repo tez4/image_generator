@@ -134,11 +134,38 @@ def append_material_from_library(blend_path, material_name):
     bpy.ops.wm.append(filename=material_name, directory=material_path)
 
 
-def get_materials_dictionary():
+def get_materials_info():
     materials = {
-        'brick_wall_02_4k.blend': 'brick_wall_02',
-        'concrete_wall_008_4k.blend': 'concrete_wall_008',
-        'laminate_floor_02_4k.blend': 'laminate_floor_02',
+        'brick_wall_02': {
+            'name': 'brick_wall_02',
+            'file': 'brick_wall_02_4k.blend',
+            'types': ['wall']
+        },
+        'concrete_wall_008': {
+            'name': 'concrete_wall_008',
+            'file': 'concrete_wall_008_4k.blend',
+            'types': ['wall']
+        },
+        'laminate_floor_02': {
+            'name': 'laminate_floor_02',
+            'file': 'laminate_floor_02_4k.blend',
+            'types': ['floor', 'ceiling']
+        },
+        'brick_wall_006': {
+            'name': 'brick_wall_006',
+            'file': 'brick_wall_006_4k.blend',
+            'types': ['wall']
+        },
+        'ceiling_interior': {
+            'name': 'ceiling_interior',
+            'file': 'ceiling_interior_4k.blend',
+            'types': ['ceiling']
+        },
+        # '': {
+        #     'name': '',
+        #     'file': '',
+        #     'types': ['wall']
+        # },
     }
 
     return materials
@@ -174,7 +201,7 @@ def convert_coords(dead_axis='z', dead_coord=0, bottom_left=(0, 0), top_right=(1
     return coords
 
 
-def create_plane_from_coords(dead_axis, dead_coord, bottom_left, top_right, flip, material_key, material_value):
+def create_plane_from_coords(dead_axis, dead_coord, bottom_left, top_right, flip, material):
     coords = convert_coords(dead_axis, dead_coord, bottom_left, top_right)
 
     # create names
@@ -210,8 +237,8 @@ def create_plane_from_coords(dead_axis, dead_coord, bottom_left, top_right, flip
     mod_subsurf.render_levels = 6
 
     # add material from library
-    append_material_from_library(material_key, material_value)
-    bpy.data.materials[material_value].name = material_name
+    append_material_from_library(material['file'], material['name'])
+    bpy.data.materials[material['name']].name = material_name
     assign_material_to_object(obj_name, material_name)
 
     mat = bpy.data.materials[material_name]
@@ -459,11 +486,12 @@ def define_skip_assets():
 def run_main():
     customize_render_quality(show_background=False, high_quality=False)
     to_skip = define_skip_assets()
+    materials = get_materials_info()
 
     assets = find_assets("//assets/interior_models/1000_plants_bundle.blend")
     for i, asset in enumerate(assets):  # zip([1, 2], ['plant_50', 'plant_24']):
-        # if i > 1:
-        #     break
+        if i > 1:
+            break
         if asset in to_skip:
             continue
 
@@ -479,20 +507,18 @@ def run_main():
         camera_position, distance = add_camera(asset_size)
         print(f'cam at: {camera_position} with distance {distance}')
 
-        mats = get_materials_dictionary()
-
-        create_plane_from_coords('z', 0, (-1, -2), (1, 1), False, list(mats.keys())[2], mats[list(mats.keys())[2]])
-        create_plane_from_coords('z', 2, (-1, -2), (1, 1), True, list(mats.keys())[2], mats[list(mats.keys())[2]])
-        create_plane_from_coords('y', 1, (-1, 0), (1, 2), False, list(mats.keys())[1], mats[list(mats.keys())[1]])
-        create_plane_from_coords('x', -1, (-2, 0), (1, 2), False, list(mats.keys())[0], mats[list(mats.keys())[0]])
-        create_plane_from_coords('x', 1, (0, 0), (1, 2), True, list(mats.keys())[1], mats[list(mats.keys())[1]])
+        create_plane_from_coords('z', 0, (-1, -2), (1, 1), False, materials['laminate_floor_02'])
+        create_plane_from_coords('z', 2, (-1, -2), (1, 1), True, materials['ceiling_interior'])
+        create_plane_from_coords('y', 1, (-1, 0), (1, 2), False, materials['brick_wall_02'])
+        create_plane_from_coords('x', -1, (-2, 0), (1, 2), False, materials['concrete_wall_008'])
+        create_plane_from_coords('x', 1, (0, 0), (1, 2), True, materials['brick_wall_006'])
 
         # create_base_plane()
         # hdri = ['cloudy_vondelpark_4k', 'abandoned_slipway_4k']
         add_world_background("//assets/background/dreifaltigkeitsberg_4k.exr")
         print('Added background')
 
-        take_picture('experiment_13', f'{i}___{asset}')
+        take_picture('experiment_14', f'{i}___{asset}')
         print('Took picture')
 
     print('Done!')
