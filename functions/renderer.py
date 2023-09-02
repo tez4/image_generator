@@ -54,8 +54,13 @@ def remove_old_objects():
         bpy.data.lights.remove(bpy.data.lights[0])
 
     # Images
-    # for image in bpy.data.images:
-    #     bpy.data.images.remove(image)
+    k = 0
+    while bpy.data.images and k < 10:
+        image = bpy.data.images[0]
+        image.user_clear()
+        if image.users == 0:
+            bpy.data.images.remove(image)
+        k += 1
 
 
 def create_glowing_material():
@@ -413,7 +418,6 @@ def add_camera(asset_size):
     )
     fov_angle = max(z_fov_angle, x_fov_angle)
     print('fov', z_fov_angle, x_fov_angle)
-    fov_angle = 0.5
 
     if 'Camera' not in bpy.data.cameras:
         print('Error! No camera named "Camera". Error happened in add_camera()')
@@ -464,7 +468,7 @@ def run_main():
         add_world_background("//assets/background/dreifaltigkeitsberg_4k.exr")
         print('Added background')
 
-        take_picture('experiment_10', f'{i}___{asset}')
+        take_picture('experiment_11', f'{i}___{asset}')
         print('Took picture')
 
     print('Done!')
