@@ -377,6 +377,7 @@ def customize_render_quality(show_background=False, high_quality=True, image_siz
 
     if high_quality:
         bpy.data.scenes['Scene'].render.engine = 'CYCLES'
+        bpy.context.preferences.addons['cycles'].preferences.compute_device_type = 'CUDA'
     else:
         bpy.context.scene.render.film_transparent = not show_background
 
@@ -489,7 +490,7 @@ def run_main():
     materials = get_materials_info()
 
     assets = find_assets("//assets/interior_models/1000_plants_bundle.blend")
-    for i, asset in enumerate(assets):  # zip([1, 2], ['plant_50', 'plant_24']):
+    for i, asset in enumerate(assets):
         if i > 1:
             break
         if asset in to_skip:
@@ -518,7 +519,7 @@ def run_main():
         add_world_background("//assets/background/dreifaltigkeitsberg_4k.exr")
         print('Added background')
 
-        take_picture('experiment_14', f'{i}___{asset}')
+        take_picture('experiment_15', f'{i}___{asset}')
         print('Took picture')
 
     print('Done!')
