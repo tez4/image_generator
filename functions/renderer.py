@@ -54,13 +54,16 @@ def remove_old_objects():
         bpy.data.lights.remove(bpy.data.lights[0])
 
     # Images
-    k = 0
-    while bpy.data.images and k < 10:
-        image = bpy.data.images[0]
-        image.user_clear()
-        if image.users == 0:
-            bpy.data.images.remove(image)
-        k += 1
+    image_names = [img.name for img in bpy.data.images]
+
+    for image_name in image_names:
+        k = 0
+        while image_name in bpy.data.images and k < 10:
+            image = bpy.data.images[image_name]
+            image.user_clear()
+            if image.users == 0:
+                bpy.data.images.remove(image)
+            k += 1
 
 
 def create_glowing_material():
@@ -459,6 +462,8 @@ def run_main():
 
     assets = find_assets("//assets/interior_models/1000_plants_bundle.blend")
     for i, asset in enumerate(assets):  # zip([1, 2], ['plant_50', 'plant_24']):
+        # if i > 1:
+        #     break
         if asset in to_skip:
             continue
 
@@ -474,20 +479,20 @@ def run_main():
         camera_position, distance = add_camera(asset_size)
         print(f'cam at: {camera_position} with distance {distance}')
 
-        # mats = get_materials_dictionary()
+        mats = get_materials_dictionary()
 
-        # create_plane_from_coords('z', 0, (-1, -2), (1, 1), False, list(mats.keys())[2], mats[list(mats.keys())[2]])
-        # create_plane_from_coords('z', 2, (-1, -2), (1, 1), True, list(mats.keys())[2], mats[list(mats.keys())[2]])
-        # create_plane_from_coords('y', 1, (-1, 0), (1, 2), False, list(mats.keys())[1], mats[list(mats.keys())[1]])
-        # create_plane_from_coords('x', -1, (-2, 0), (1, 2), False, list(mats.keys())[0], mats[list(mats.keys())[0]])
-        # create_plane_from_coords('x', 1, (0, 0), (1, 2), True, list(mats.keys())[1], mats[list(mats.keys())[1]])
+        create_plane_from_coords('z', 0, (-1, -2), (1, 1), False, list(mats.keys())[2], mats[list(mats.keys())[2]])
+        create_plane_from_coords('z', 2, (-1, -2), (1, 1), True, list(mats.keys())[2], mats[list(mats.keys())[2]])
+        create_plane_from_coords('y', 1, (-1, 0), (1, 2), False, list(mats.keys())[1], mats[list(mats.keys())[1]])
+        create_plane_from_coords('x', -1, (-2, 0), (1, 2), False, list(mats.keys())[0], mats[list(mats.keys())[0]])
+        create_plane_from_coords('x', 1, (0, 0), (1, 2), True, list(mats.keys())[1], mats[list(mats.keys())[1]])
 
         # create_base_plane()
         # hdri = ['cloudy_vondelpark_4k', 'abandoned_slipway_4k']
         add_world_background("//assets/background/dreifaltigkeitsberg_4k.exr")
         print('Added background')
 
-        take_picture('experiment_12', f'{i}___{asset}')
+        take_picture('experiment_13', f'{i}___{asset}')
         print('Took picture')
 
     print('Done!')
