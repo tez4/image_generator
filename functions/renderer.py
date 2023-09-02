@@ -441,17 +441,36 @@ def take_picture(folder, image_name):
     # bpy.data.images.remove(bpy.data.images['Render Result'])
 
 
+def define_skip_assets():
+    to_skip = [
+        'plant_25',
+        'plant_18',
+        'plant_16',
+        'plant_12',
+        'plant_10',
+    ]
+
+    return to_skip
+
+
 def run_main():
     customize_render_quality(show_background=False, high_quality=False)
+    to_skip = define_skip_assets()
 
     assets = find_assets("//assets/interior_models/1000_plants_bundle.blend")
     for i, asset in enumerate(assets):  # zip([1, 2], ['plant_50', 'plant_24']):
+        if asset in to_skip:
+            continue
+
         remove_old_objects()
         print('Removed objects')
         add_asset("./assets/interior_models/1000_plants_bundle.blend/Object/", asset)
         print('Added asset')
         asset_size = get_asset_size(asset)
         print(asset_size)
+        if asset_size[2] > 2.6:
+            continue
+
         camera_position, distance = add_camera(asset_size)
         print(f'cam at: {camera_position} with distance {distance}')
 
@@ -468,7 +487,7 @@ def run_main():
         add_world_background("//assets/background/dreifaltigkeitsberg_4k.exr")
         print('Added background')
 
-        take_picture('experiment_11', f'{i}___{asset}')
+        take_picture('experiment_12', f'{i}___{asset}')
         print('Took picture')
 
     print('Done!')
