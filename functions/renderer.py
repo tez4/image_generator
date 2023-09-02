@@ -161,6 +161,11 @@ def get_materials_info():
             'file': 'ceiling_interior_4k.blend',
             'types': ['ceiling']
         },
+        'piano_key': {
+            'name': 'piano_key',
+            'file': 'piano_key.blend',
+            'types': []
+        },
         # '': {
         #     'name': '',
         #     'file': '',
@@ -201,7 +206,7 @@ def convert_coords(dead_axis='z', dead_coord=0, bottom_left=(0, 0), top_right=(1
     return coords
 
 
-def create_plane_from_coords(dead_axis, dead_coord, bottom_left, top_right, flip, material):
+def create_plane_from_coords(dead_axis, dead_coord, bottom_left, top_right, flip, material, has_texture=True):
     coords = convert_coords(dead_axis, dead_coord, bottom_left, top_right)
 
     # create names
@@ -241,18 +246,19 @@ def create_plane_from_coords(dead_axis, dead_coord, bottom_left, top_right, flip
     bpy.data.materials[material['name']].name = material_name
     assign_material_to_object(obj_name, material_name)
 
-    mat = bpy.data.materials[material_name]
-    nodes = mat.node_tree.nodes
-    x_scale = abs(top_right[0] - bottom_left[0])
-    y_scale = abs(top_right[1] - bottom_left[1])
-    if dead_axis == 'x':
-        nodes['Mapping'].inputs['Scale'].default_value = (y_scale, x_scale, 1.0)
-        nodes['Mapping'].inputs['Rotation'].default_value = (0, 0, radians(90))
-    else:
-        nodes['Mapping'].inputs['Scale'].default_value = (x_scale, y_scale, 1.0)
+    if has_texture:
+        mat = bpy.data.materials[material_name]
+        nodes = mat.node_tree.nodes
+        x_scale = abs(top_right[0] - bottom_left[0])
+        y_scale = abs(top_right[1] - bottom_left[1])
+        if dead_axis == 'x':
+            nodes['Mapping'].inputs['Scale'].default_value = (y_scale, x_scale, 1.0)
+            nodes['Mapping'].inputs['Rotation'].default_value = (0, 0, radians(90))
+        else:
+            nodes['Mapping'].inputs['Scale'].default_value = (x_scale, y_scale, 1.0)
 
-    if flip:
-        nodes['Displacement'].inputs[2].default_value = -nodes['Displacement'].inputs[2].default_value
+        if flip:
+            nodes['Displacement'].inputs[2].default_value = -nodes['Displacement'].inputs[2].default_value
 
 
 def create_base_plane():
@@ -488,10 +494,11 @@ def run_main():
     customize_render_quality(show_background=False, high_quality=False)
     to_skip = define_skip_assets()
     materials = get_materials_info()
+    experiment_name = 'experiment_16'
 
     assets = find_assets("//assets/interior_models/1000_plants_bundle.blend")
     for i, asset in enumerate(assets):
-        if i > 1:
+        if i > 0:
             break
         if asset in to_skip:
             continue
@@ -508,6 +515,18 @@ def run_main():
         camera_position, distance = add_camera(asset_size)
         print(f'cam at: {camera_position} with distance {distance}')
 
+        add_asset("./assets/custom_planes/plane_01.blend/Object/", 'Plane_01')
+        obj = bpy.data.objects['Plane_01']
+        obj.rotation_euler = (0, 0, 0)
+
+        add_world_background("//assets/background/abandoned_slipway_4k.exr")
+        print('Added background')
+
+        take_picture(experiment_name, f'{i}__2_{asset}')
+
+        bpy.data.objects["Plane_01"].hide_render = True
+        bpy.data.objects["Plane_01"].hide_viewport = True
+
         create_plane_from_coords('z', 0, (-1, -2), (1, 1), False, materials['laminate_floor_02'])
         create_plane_from_coords('z', 2, (-1, -2), (1, 1), True, materials['ceiling_interior'])
         create_plane_from_coords('y', 1, (-1, 0), (1, 2), False, materials['brick_wall_02'])
@@ -519,7 +538,7 @@ def run_main():
         add_world_background("//assets/background/dreifaltigkeitsberg_4k.exr")
         print('Added background')
 
-        take_picture('experiment_15', f'{i}___{asset}')
+        take_picture(experiment_name, f'{i}__1_{asset}')
         print('Took picture')
 
     print('Done!')
