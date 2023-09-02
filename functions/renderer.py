@@ -292,7 +292,7 @@ def create_base_plane():
     plane.data.materials.append(mat)
 
 
-def add_world_background(exr_file_path):
+def add_world_background(exr_file_path, strength=1.0):
 
     # Load the image into Blender
     image = bpy.data.images.load(exr_file_path)
@@ -355,6 +355,9 @@ def add_world_background(exr_file_path):
             world_output_node.inputs["Surface"]
         )
 
+    # add strength
+    background_node.inputs[1].default_value = strength
+
 
 def get_asset_size(obj_name='plant_24'):
 
@@ -386,6 +389,7 @@ def customize_render_quality(show_background=False, high_quality=True, image_siz
         bpy.data.scenes['Scene'].cycles.device = 'GPU'
         bpy.context.preferences.addons['cycles'].preferences.compute_device_type = 'CUDA'
     else:
+        bpy.data.scenes['Scene'].render.engine = 'BLENDER_EEVEE'
         bpy.context.scene.render.film_transparent = not show_background
 
         # Ambient Occlusion
@@ -469,6 +473,30 @@ def add_camera(asset_size):
     return camera_position, distance
 
 
+def add_point_light(name, location, radius, energy):
+    light_data = bpy.data.lights.new(name=name, type='POINT')
+    light_object = bpy.data.objects.new(name, light_data)
+    bpy.context.collection.objects.link(light_object)
+    light_object.location = location
+    bpy.data.lights[name].energy = energy
+    bpy.data.lights[name].shadow_soft_size = radius
+
+
+def add_point_lights(asset_size):
+    x, y, z = asset_size
+    x_light = x / 2 * 1.5
+    y_light = y / 2 * 1.5
+    z_light = z * 2.5
+
+    distance_to_center = (x_light ** 2 + y_light ** 2 + (z_light - (z / 2)) ** 2) ** 0.5
+    radius = distance_to_center / 6
+    energy = distance_to_center * 30
+
+    add_point_light('back_left_light', (-x_light, y_light, z_light), radius, energy)
+    add_point_light('back_right_light', (x_light, y_light, z_light), radius, energy)
+    add_point_light('front_light', (0, -y_light, z_light), radius, energy / 2)
+
+
 def take_picture(folder, image_name):
     folder_path = f'./output/{folder}'
     if not os.path.exists(folder_path):
@@ -495,11 +523,11 @@ def run_main():
     customize_render_quality(show_background=False, high_quality=True)
     to_skip = define_skip_assets()
     materials = get_materials_info()
-    experiment_name = 'experiment_18'
+    experiment_name = 'experiment_20'
 
     assets = find_assets("//assets/interior_models/1000_plants_bundle.blend")
     for i, asset in enumerate(assets):
-        if i > 0:
+        if i > 1:
             break
         if asset in to_skip:
             continue
@@ -520,13 +548,15 @@ def run_main():
         obj = bpy.data.objects['Plane_01']
         obj.rotation_euler = (0, 0, 0)
 
-        add_world_background("//assets/background/abandoned_slipway_4k.exr")
+        add_world_background("//assets/background/abandoned_slipway_4k.exr", 0.5)
         print('Added background')
+        add_point_lights(asset_size)
 
         take_picture(experiment_name, f'{i}__2_{asset}')
 
-        bpy.data.objects["Plane_01"].hide_render = True
-        bpy.data.objects["Plane_01"].hide_viewport = True
+        for object in ["Plane_01", "back_left_light", "back_right_light", "front_light"]:
+            bpy.data.objects[object].hide_render = True
+            bpy.data.objects[object].hide_viewport = True
 
         create_plane_from_coords('z', 0, (-1, -2), (1, 1), False, materials['laminate_floor_02'])
         create_plane_from_coords('z', 2, (-1, -2), (1, 1), True, materials['ceiling_interior'])
@@ -536,7 +566,7 @@ def run_main():
 
         # create_base_plane()
         # hdri = ['cloudy_vondelpark_4k', 'abandoned_slipway_4k']
-        add_world_background("//assets/background/dreifaltigkeitsberg_4k.exr")
+        add_world_background("//assets/background/dreifaltigkeitsberg_4k.exr", 1.0)
         print('Added background')
 
         take_picture(experiment_name, f'{i}__1_{asset}')
