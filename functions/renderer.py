@@ -383,6 +383,7 @@ def customize_render_quality(show_background=False, high_quality=True, image_siz
 
     if high_quality:
         bpy.data.scenes['Scene'].render.engine = 'CYCLES'
+        bpy.data.scenes['Scene'].cycles.device = 'GPU'
         bpy.context.preferences.addons['cycles'].preferences.compute_device_type = 'CUDA'
     else:
         bpy.context.scene.render.film_transparent = not show_background
@@ -491,10 +492,10 @@ def define_skip_assets():
 
 
 def run_main():
-    customize_render_quality(show_background=False, high_quality=False)
+    customize_render_quality(show_background=False, high_quality=True)
     to_skip = define_skip_assets()
     materials = get_materials_info()
-    experiment_name = 'experiment_16'
+    experiment_name = 'experiment_18'
 
     assets = find_assets("//assets/interior_models/1000_plants_bundle.blend")
     for i, asset in enumerate(assets):
