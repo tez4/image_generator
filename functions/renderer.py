@@ -8,47 +8,50 @@ from math import radians, atan2, sqrt, acos, degrees
 
 def remove_old_objects():
     # Ensure we're in Object mode
-    bpy.ops.object.mode_set(mode='OBJECT')
+    # bpy.ops.mesh.primitive_cube_add(size=2, location=(0, 0, 0))
+    # bpy.ops.object.mode_set(mode='OBJECT')
 
-    # Delete all objects
-    bpy.ops.object.select_all(action='SELECT')
-    bpy.ops.object.delete()
-
-    # Delete all materials
-    for material in bpy.data.materials:
-        bpy.data.materials.remove(material)
-
-    # Delete all textures
-    for texture in bpy.data.textures:
-        bpy.data.textures.remove(texture)
-
-    # Armatures and Bone Groups
-    for armature in bpy.data.armatures:
-        bpy.data.armatures.remove(armature)
-
-    # Particles
-    for particle in bpy.data.particles:
-        bpy.data.particles.remove(particle)
-
-    # Worlds
-    for world in bpy.data.worlds:
-        bpy.data.worlds.remove(world)
-
-    # Grease Pencils
-    for pencil in bpy.data.grease_pencils:
-        bpy.data.grease_pencils.remove(pencil)
-
-    # Cameras
-    for camera in bpy.data.cameras:
-        bpy.data.cameras.remove(camera)
-
-    # Lamps/Lights
-    for light in bpy.data.lights:
-        bpy.data.lights.remove(light)
+    # # Delete all objects
+    # bpy.ops.object.select_all(action='SELECT')
+    # bpy.ops.object.delete()
+    while bpy.data.objects:
+        bpy.data.objects.remove(bpy.data.objects[0])
 
     # Meshes
-    for mesh in bpy.data.meshes:
-        bpy.data.meshes.remove(mesh)
+    while bpy.data.meshes:
+        bpy.data.meshes.remove(bpy.data.meshes[0])
+
+    # Delete all materials
+    while bpy.data.materials:
+        bpy.data.materials.remove(bpy.data.materials[0])
+
+    # Delete all textures
+    while bpy.data.textures:
+        bpy.data.textures.remove(bpy.data.textures[0])
+
+    # Armatures and Bone Groups
+    while bpy.data.armatures:
+        bpy.data.armatures.remove(bpy.data.armatures[0])
+
+    # Particles
+    while bpy.data.particles:
+        bpy.data.particles.remove(bpy.data.particles[0])
+
+    # Worlds
+    while bpy.data.worlds:
+        bpy.data.worlds.remove(bpy.data.worlds[0])
+
+    # Grease Pencils
+    while bpy.data.grease_pencils:
+        bpy.data.grease_pencils.remove(bpy.data.grease_pencils[0])
+
+    # Cameras
+    while bpy.data.cameras:
+        bpy.data.cameras.remove(bpy.data.cameras[0])
+
+    # Lamps/Lights
+    while bpy.data.lights:
+        bpy.data.lights.remove(bpy.data.lights[0])
 
     # Images
     # for image in bpy.data.images:
@@ -380,7 +383,9 @@ def angle_of_vectors(a, b):
     b_x, b_y = b
     dot_product = a_x * b_x + a_y * b_y
     mod = sqrt(a_x * a_x + a_y * a_y) * sqrt(b_x * b_x + b_y * b_y)
-    return acos(dot_product / mod)
+    if mod == 0:
+        print('Error! Angle of vectors is zero!')
+    return acos(min(1, max(-1, dot_product / mod)))
 
 
 def add_camera(asset_size):
@@ -390,9 +395,16 @@ def add_camera(asset_size):
     angle = atan2(abs(y_camera), z_camera - (z / 2))
     distance = (abs(y_camera) ** 2 + (z_camera - (z / 2)) ** 2) ** 0.5
 
-    camera_position = (0, y_camera, z_camera)
-    bpy.ops.object.camera_add(location=camera_position, rotation=(angle, 0, 0))
-    bpy.context.active_object.name = "ProductCamera"
+    camera_position = (0.0, round(y_camera, 6), round(z_camera, 6))
+
+    print('cam position and angle:', camera_position, angle)
+    cam_data = bpy.data.cameras.new(name="Camera")
+    cam_object = bpy.data.objects.new("ProductCamera", cam_data)
+    bpy.context.collection.objects.link(cam_object)
+    cam_object.location = camera_position
+    cam_object.rotation_euler = (angle, 0, 0)
+    bpy.context.scene.camera = cam_object
+    print('camera added')
 
     x_fov_angle = atan2(x / 2, abs(y_camera) - (y / 2))
     z_fov_angle = angle_of_vectors(
@@ -400,6 +412,8 @@ def add_camera(asset_size):
         (abs(y_camera) - (y / 2), z_camera)
     )
     fov_angle = max(z_fov_angle, x_fov_angle)
+    print('fov', z_fov_angle, x_fov_angle)
+    fov_angle = 0.5
 
     if 'Camera' not in bpy.data.cameras:
         print('Error! No camera named "Camera". Error happened in add_camera()')
@@ -427,9 +441,11 @@ def run_main():
     customize_render_quality(show_background=False, high_quality=False)
 
     assets = find_assets("//assets/interior_models/1000_plants_bundle.blend")
-    for i, asset in enumerate(assets):
+    for i, asset in enumerate(assets):  # zip([1, 2], ['plant_50', 'plant_24']):
         remove_old_objects()
+        print('Removed objects')
         add_asset("./assets/interior_models/1000_plants_bundle.blend/Object/", asset)
+        print('Added asset')
         asset_size = get_asset_size(asset)
         print(asset_size)
         camera_position, distance = add_camera(asset_size)
@@ -446,8 +462,10 @@ def run_main():
         # create_base_plane()
         # hdri = ['cloudy_vondelpark_4k', 'abandoned_slipway_4k']
         add_world_background("//assets/background/dreifaltigkeitsberg_4k.exr")
+        print('Added background')
 
-        take_picture('experiment_7', f'{i}___{asset}')
+        take_picture('experiment_10', f'{i}___{asset}')
+        print('Took picture')
 
     print('Done!')
 
