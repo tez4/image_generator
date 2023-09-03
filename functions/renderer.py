@@ -3,6 +3,7 @@ import bpy
 import uuid
 import bmesh
 import random
+import logging
 import mathutils
 from math import radians, atan2, sqrt, acos, degrees
 
@@ -519,10 +520,12 @@ def angle_of_vectors(a, b):
     return acos(min(1, max(-1, dot_product / mod)))
 
 
-def add_camera(asset_size):
+def add_camera(asset_size, randomness=True):
     x, y, z = asset_size
-    y_camera = -((y / 2) + (max(x, z) * (1 + random.random() * 2)))
-    z_camera = min(max((z * 0.2) + (random.random() * z * 1.3), 0.3), 1.8)
+    y_camera_random = random.random() if randomness else 0.5
+    z_camera_random = random.random() if randomness else 0.5
+    y_camera = -((y / 2) + (max(x, z) * (1 + y_camera_random * 2)))
+    z_camera = min(max((z * 0.2) + (z_camera_random * z * 1.3), 0.3), 1.8)
     angle = atan2(abs(y_camera), z_camera - (z / 2))
     distance = (abs(y_camera) ** 2 + (z_camera - (z / 2)) ** 2) ** 0.5
 
@@ -607,7 +610,7 @@ def run_main():
     customize_render_quality(show_background=False, high_quality=False)
     to_skip = define_skip_assets()
     materials = get_materials_info()
-    experiment_name = 'experiment_22'
+    experiment_name = 'experiment_23'
 
     assets = find_assets("//assets/interior_models/1000_plants_bundle.blend")
     for i, asset in enumerate(assets):
@@ -661,13 +664,13 @@ def run_main():
     # for i, material in enumerate(materials.keys()):
     #     if len(materials[material]['types']) > 0:
     #         remove_old_objects()
-    #         add_camera((1, 1, 1))
+    #         add_camera((1.5, 1.5, 1.5), False)
 
     #         create_plane_from_coords('z', 0, (-1, -2), (1, 1), False, materials[material])
     #         create_plane_from_coords('z', 2, (-1, -2), (1, 1), True, materials[material])
     #         create_plane_from_coords('y', 1, (-1, 0), (1, 2), False, materials[material])
     #         create_plane_from_coords('x', -1, (-2, 0), (1, 2), False, materials[material])
-    #         create_plane_from_coords('x', 1, (0, 0), (1, 2), True, materials[material])
+    #         create_plane_from_coords('x', 1, (-2, 0), (1, 2), True, materials[material])
 
     #         add_world_background("//assets/background/abandoned_slipway_4k.exr", 1.0)
 
