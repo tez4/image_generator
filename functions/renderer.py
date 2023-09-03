@@ -3,9 +3,42 @@ import bpy
 import uuid
 import bmesh
 import random
-import logging
 import mathutils
 from math import radians, atan2, sqrt, acos, degrees
+
+
+class SimpleLogger:
+    # Defining log levels
+    DEBUG = 0
+    INFO = 1
+    WARNING = 2
+    ERROR = 3
+    CRITICAL = 4
+
+    def __init__(self, level=INFO):
+        self.level = level
+
+    def debug(self, msg):
+        self._log(self.DEBUG, "DEBUG", msg)
+
+    def info(self, msg):
+        self._log(self.INFO, "INFO", msg)
+
+    def warning(self, msg):
+        self._log(self.WARNING, "WARNING", msg)
+
+    def error(self, msg):
+        self._log(self.ERROR, "ERROR", msg)
+
+    def critical(self, msg):
+        self._log(self.CRITICAL, "CRITICAL", msg)
+
+    def _log(self, level, level_name, msg):
+        if level >= self.level:
+            print(f"[{level_name}] {msg}")
+
+
+logging = SimpleLogger(level=SimpleLogger.INFO)
 
 
 def remove_old_objects():
@@ -531,7 +564,7 @@ def add_camera(asset_size, randomness=True):
 
     camera_position = (0.0, round(y_camera, 6), round(z_camera, 6))
 
-    logging.info('cam position and angle:', camera_position, angle)
+    logging.info(f'cam position and angle: { camera_position} {angle}')
     cam_data = bpy.data.cameras.new(name="Camera")
     cam_object = bpy.data.objects.new("ProductCamera", cam_data)
     bpy.context.collection.objects.link(cam_object)
@@ -546,7 +579,7 @@ def add_camera(asset_size, randomness=True):
         (abs(y_camera) - (y / 2), z_camera)
     )
     fov_angle = max(z_fov_angle, x_fov_angle)
-    logging.info('fov', z_fov_angle, x_fov_angle)
+    logging.info(f'fov angles: {z_fov_angle} {x_fov_angle}')
 
     if 'Camera' not in bpy.data.cameras:
         logging.critical('Error! No camera named "Camera". Error happened in add_camera()')
@@ -607,7 +640,8 @@ def define_skip_assets():
 
 
 def run_main():
-    logging.basicConfig(level=logging.WARNING)
+    logging.info("Started Program")
+
     customize_render_quality(show_background=False, high_quality=False)
     to_skip = define_skip_assets()
     materials = get_materials_info()
@@ -630,7 +664,8 @@ def run_main():
             continue
 
         camera_position, distance = add_camera(asset_size)
-        logging.info(f'cam at: {camera_position} with distance {distance}')
+        logging.debug(f'cam at: {camera_position} with distance {distance}')
+        logging.debug('Added camera')
 
         add_asset("./assets/custom_planes/plane_01.blend/Object/", 'Plane_01')
         obj = bpy.data.objects['Plane_01']
