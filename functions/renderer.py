@@ -410,7 +410,8 @@ def create_base_plane():
     plane.data.materials.append(mat)
 
 
-def add_world_background(exr_file_path, strength=1.0):
+def add_world_background(exr_file_path, strength=1.0, rotation_degrees=0.0, randomness=False):
+    rotation_degrees = random.random() * 360 if randomness else rotation_degrees
 
     # Load the image into Blender
     image = bpy.data.images.load(exr_file_path)
@@ -428,50 +429,33 @@ def add_world_background(exr_file_path, strength=1.0):
     # Ensure the world uses nodes
     scene.world.use_nodes = True
 
-    # Get the node tree of the world
+    # Get the node tree of the world and clear out existing nodes
     node_tree = scene.world.node_tree
+    node_tree.nodes.clear()
 
-    # Check for an existing Environment Texture node
-    environment_texture_node = next(
-        (node for node in node_tree.nodes if node.type == 'TEX_ENVIRONMENT'), None)
-
-    # If not found, create one
-    if not environment_texture_node:
-        environment_texture_node = node_tree.nodes.new(
-            type='ShaderNodeTexEnvironment')
-
-    # Set the image to the node
+    # Create new Environment Texture node
+    environment_texture_node = node_tree.nodes.new(type='ShaderNodeTexEnvironment')
     environment_texture_node.image = image
 
-    # Check for an existing Background node
-    background_node = next(
-        (node for node in node_tree.nodes if node.type == 'BACKGROUND'), None)
+    # Create a Background node
+    background_node = node_tree.nodes.new(type='ShaderNodeBackground')
+    background_node.inputs[1].default_value = strength
 
-    # If not found, create one
-    if not background_node:
-        background_node = node_tree.nodes.new(type='ShaderNodeBackground')
+    # Create mapping and texture coordinate nodes for controlling rotation
+    tex_coord_node = node_tree.nodes.new(type='ShaderNodeTexCoord')
+    mapping_node = node_tree.nodes.new(type='ShaderNodeMapping')
 
-    # Connect the Environment Texture node to the Background node if not connected
-    if not environment_texture_node.outputs["Color"].links:
-        node_tree.links.new(
-            environment_texture_node.outputs["Color"],
-            background_node.inputs["Color"]
-        )
+    # Set the rotation in Z axis
+    mapping_node.inputs["Rotation"].default_value[2] = radians(rotation_degrees)
 
-    # Check for the Output node (World Output)
-    world_output_node = next(
-        (node for node in node_tree.nodes if node.type == 'OUTPUT_WORLD'), None)
+    # Connect nodes
+    node_tree.links.new(tex_coord_node.outputs["Generated"], mapping_node.inputs["Vector"])
+    node_tree.links.new(mapping_node.outputs["Vector"], environment_texture_node.inputs["Vector"])
+    node_tree.links.new(environment_texture_node.outputs["Color"], background_node.inputs["Color"])
 
-    # If not found, create one
-    if not world_output_node:
-        world_output_node = node_tree.nodes.new(type='ShaderNodeOutputWorld')
-
-    # Connect the Background node to the World Output node if not connected
-    if not background_node.outputs["Background"].links:
-        node_tree.links.new(
-            background_node.outputs["Background"],
-            world_output_node.inputs["Surface"]
-        )
+    # Create and connect the World Output node
+    world_output_node = node_tree.nodes.new(type='ShaderNodeOutputWorld')
+    node_tree.links.new(background_node.outputs["Background"], world_output_node.inputs["Surface"])
 
     # add strength
     background_node.inputs[1].default_value = strength
@@ -642,7 +626,7 @@ def define_skip_assets():
 def run_main():
     logging.info("Started Program")
 
-    customize_render_quality(show_background=False, high_quality=False)
+    customize_render_quality(show_background=True, high_quality=False)
     to_skip = define_skip_assets()
     materials = get_materials_info()
     experiment_name = 'experiment_23'
@@ -671,7 +655,7 @@ def run_main():
         obj = bpy.data.objects['Plane_01']
         obj.rotation_euler = (0, 0, 0)
 
-        add_world_background("//assets/background/abandoned_slipway_4k.exr", 0.5)
+        add_world_background("//assets/background/abandoned_slipway_4k.exr", 0.5, 270, False)
         logging.debug('Added background')
         add_point_lights(asset_size)
 
@@ -689,7 +673,7 @@ def run_main():
 
         # create_base_plane()
         # hdri = ['cloudy_vondelpark_4k', 'abandoned_slipway_4k']
-        add_world_background("//assets/background/dreifaltigkeitsberg_4k.exr", 1.0)
+        add_world_background("//assets/background/dreifaltigkeitsberg_4k.exr", 1.0, 90, True)
         logging.debug('Added background')
 
         take_picture(experiment_name, f'{i}__1_{asset}')
