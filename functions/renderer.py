@@ -384,7 +384,7 @@ def add_world_background(exr_file_path, strength=1.0):
 
     # Check if the image is loaded correctly
     if not image:
-        print("Failed to load the exr image!")
+        logging.warning("Failed to load the exr image!")
         exit()
 
     scene = bpy.context.scene
@@ -465,7 +465,7 @@ def get_asset_size(obj_name='plant_24'):
 
 def customize_render_quality(show_background=False, high_quality=True, image_size=1024):
     if 'Scene' not in bpy.data.scenes:
-        print('Error! No scene named "Scene". Error happened in customize_render_quality()')
+        logging.critical('Error! No scene named "Scene". Error happened in customize_render_quality()')
     bpy.data.scenes['Scene'].render.resolution_x = image_size
     bpy.data.scenes['Scene'].render.resolution_y = image_size
 
@@ -516,7 +516,7 @@ def angle_of_vectors(a, b):
     dot_product = a_x * b_x + a_y * b_y
     mod = sqrt(a_x * a_x + a_y * a_y) * sqrt(b_x * b_x + b_y * b_y)
     if mod == 0:
-        print('Error! Angle of vectors is zero!')
+        logging.critical('Error! Angle of vectors is zero!')
     return acos(min(1, max(-1, dot_product / mod)))
 
 
@@ -531,14 +531,14 @@ def add_camera(asset_size, randomness=True):
 
     camera_position = (0.0, round(y_camera, 6), round(z_camera, 6))
 
-    print('cam position and angle:', camera_position, angle)
+    logging.info('cam position and angle:', camera_position, angle)
     cam_data = bpy.data.cameras.new(name="Camera")
     cam_object = bpy.data.objects.new("ProductCamera", cam_data)
     bpy.context.collection.objects.link(cam_object)
     cam_object.location = camera_position
     cam_object.rotation_euler = (angle, 0, 0)
     bpy.context.scene.camera = cam_object
-    print('camera added')
+    logging.debug('camera added')
 
     x_fov_angle = atan2(x / 2, abs(y_camera) - (y / 2))
     z_fov_angle = angle_of_vectors(
@@ -546,10 +546,10 @@ def add_camera(asset_size, randomness=True):
         (abs(y_camera) - (y / 2), z_camera)
     )
     fov_angle = max(z_fov_angle, x_fov_angle)
-    print('fov', z_fov_angle, x_fov_angle)
+    logging.info('fov', z_fov_angle, x_fov_angle)
 
     if 'Camera' not in bpy.data.cameras:
-        print('Error! No camera named "Camera". Error happened in add_camera()')
+        logging.critical('Error! No camera named "Camera". Error happened in add_camera()')
 
     bpy.data.cameras['Camera'].lens_unit = 'FOV'
     bpy.data.cameras['Camera'].angle = fov_angle * 2
@@ -607,6 +607,7 @@ def define_skip_assets():
 
 
 def run_main():
+    logging.basicConfig(level=logging.WARNING)
     customize_render_quality(show_background=False, high_quality=False)
     to_skip = define_skip_assets()
     materials = get_materials_info()
@@ -620,23 +621,23 @@ def run_main():
             continue
 
         remove_old_objects()
-        print('Removed objects')
+        logging.debug('Removed objects')
         add_asset("./assets/interior_models/1000_plants_bundle.blend/Object/", asset)
-        print('Added asset')
+        logging.debug('Added asset')
         asset_size = get_asset_size(asset)
-        print(asset_size)
+        logging.info(asset_size)
         if asset_size[2] > 2.6:
             continue
 
         camera_position, distance = add_camera(asset_size)
-        print(f'cam at: {camera_position} with distance {distance}')
+        logging.info(f'cam at: {camera_position} with distance {distance}')
 
         add_asset("./assets/custom_planes/plane_01.blend/Object/", 'Plane_01')
         obj = bpy.data.objects['Plane_01']
         obj.rotation_euler = (0, 0, 0)
 
         add_world_background("//assets/background/abandoned_slipway_4k.exr", 0.5)
-        print('Added background')
+        logging.debug('Added background')
         add_point_lights(asset_size)
 
         take_picture(experiment_name, f'{i}__2_{asset}')
@@ -654,12 +655,12 @@ def run_main():
         # create_base_plane()
         # hdri = ['cloudy_vondelpark_4k', 'abandoned_slipway_4k']
         add_world_background("//assets/background/dreifaltigkeitsberg_4k.exr", 1.0)
-        print('Added background')
+        logging.debug('Added background')
 
         take_picture(experiment_name, f'{i}__1_{asset}')
-        print('Took picture')
+        logging.debug('Took picture')
 
-    print('Done!')
+    logging.info('Done!')
 
     # for i, material in enumerate(materials.keys()):
     #     if len(materials[material]['types']) > 0:
@@ -676,7 +677,7 @@ def run_main():
 
     #         take_picture(experiment_name, f'{i}____{material}')
 
-    # print('Done!')
+    # logging.info('Done!')
 
 
 run_main()
