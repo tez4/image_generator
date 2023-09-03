@@ -142,16 +142,6 @@ def get_materials_info():
             'file': 'brick_wall_02_4k.blend',
             'types': ['wall']
         },
-        'concrete_wall_008': {
-            'name': 'concrete_wall_008',
-            'file': 'concrete_wall_008_4k.blend',
-            'types': ['wall']
-        },
-        'laminate_floor_02': {
-            'name': 'laminate_floor_02',
-            'file': 'laminate_floor_02_4k.blend',
-            'types': ['floor', 'ceiling']
-        },
         'brick_wall_006': {
             'name': 'brick_wall_006',
             'file': 'brick_wall_006_4k.blend',
@@ -162,15 +152,100 @@ def get_materials_info():
             'file': 'ceiling_interior_4k.blend',
             'types': ['ceiling']
         },
+        'concrete_floor_03': {
+            'name': 'concrete_floor_03',
+            'file': 'concrete_floor_03_4k.blend',
+            'types': ['floor']
+        },
+        'concrete_layers_02': {
+            'name': 'concrete_layers_02',
+            'file': 'concrete_layers_02_4k.blend',
+            'types': ['floor', 'wall', 'ceiling']
+        },
+        'concrete_wall_005': {
+            'name': 'concrete_wall_005',
+            'file': 'concrete_wall_005_4k.blend',
+            'types': ['wall']
+        },
+        'concrete_wall_008': {
+            'name': 'concrete_wall_008',
+            'file': 'concrete_wall_008_4k.blend',
+            'types': ['wall']
+        },
+        'garage_floor': {
+            'name': 'garage_floor',
+            'file': 'garage_floor_4k.blend',
+            'types': ['floor']
+        },
+        'grey_stone_path': {
+            'name': 'grey_stone_path',
+            'file': 'grey_stone_path_4k.blend',
+            'types': ['floor']
+        },
+        'herringbone_parquet': {
+            'name': 'herringbone_parquet',
+            'file': 'herringbone_parquet_4k.blend',
+            'types': ['floor']
+        },
+        'laminate_floor_02': {
+            'name': 'laminate_floor_02',
+            'file': 'laminate_floor_02_4k.blend',
+            'types': ['floor', 'ceiling']
+        },
+        'mossy_cobblestone': {
+            'name': 'mossy_cobblestone',
+            'file': 'mossy_cobblestone_4k.blend',
+            'types': ['floor']
+        },
+        'patterned_brick_floor': {
+            'name': 'patterned_brick_floor',
+            'file': 'patterned_brick_floor_4k.blend',
+            'types': ['floor']
+        },
         'piano_key': {
             'name': 'piano_key',
             'file': 'piano_key.blend',
             'types': []
         },
+        'plastered_stone_wall': {
+            'name': 'plastered_stone_wall',
+            'file': 'plastered_stone_wall_4k.blend',
+            'types': ['wall']
+        },
+        'preconcrete_wall_001': {
+            'name': 'preconcrete_wall_001',
+            'file': 'preconcrete_wall_001_4k.blend',
+            'types': ['wall']
+        },
+        'raw_plank_wall': {
+            'name': 'raw_plank_wall',
+            'file': 'raw_plank_wall_4k.blend',
+            'types': ['wall']
+        },
+        'rustic_stone_wall_02': {
+            'name': 'rustic_stone_wall_02',
+            'file': 'rustic_stone_wall_02_4k.blend',
+            'types': ['wall']
+        },
+        'rusty_metal_sheet': {
+            'name': 'rusty_metal_sheet',
+            'file': 'rusty_metal_sheet_4k.blend',
+            'types': ['floor', 'wall', 'ceiling']
+        },
+        'short_bricks_floor': {
+            'name': 'short_bricks_floor',
+            'file': 'short_bricks_floor_4k.blend',
+            'types': ['floor']
+        },
+        'wood_floor_deck': {
+            'name': 'wood_floor_deck',
+            'file': 'wood_floor_deck_4k.blend',
+            'types': ['floor']
+        },
         # '': {
         #     'name': '',
         #     'file': '',
-        #     'types': ['wall']
+        #     'types': []
         # },
     }
 
@@ -532,7 +607,7 @@ def run_main():
     customize_render_quality(show_background=False, high_quality=False)
     to_skip = define_skip_assets()
     materials = get_materials_info()
-    experiment_name = 'experiment_21'
+    experiment_name = 'experiment_22'
 
     assets = find_assets("//assets/interior_models/1000_plants_bundle.blend")
     for i, asset in enumerate(assets):
