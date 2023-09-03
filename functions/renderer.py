@@ -154,11 +154,15 @@ def find_assets(blend_file_path="//assets/interior_models/1000_plants_bundle.ble
     return assets
 
 
-def add_asset(filepath="./assets/interior_models/1000_plants_bundle.blend/Object/", name='plant_24'):
+def add_asset(
+        filepath="./assets/interior_models/1000_plants_bundle.blend/Object/", name='plant_24', rotation_degrees=0.0,
+        randomness=False):
+
+    rotation_degrees = random.random() * 360 if randomness else rotation_degrees
     bpy.ops.wm.append(directory=filepath, filename=name)
     obj = bpy.data.objects[name]
     obj.location = (0, 0, 0)
-    obj.rotation_euler = (0, 0, radians(random.random() * 360))
+    obj.rotation_euler = (0, 0, radians(rotation_degrees))
 
 
 def append_material_from_library(blend_path, material_name):
@@ -629,7 +633,7 @@ def run_main():
     customize_render_quality(show_background=True, high_quality=False)
     to_skip = define_skip_assets()
     materials = get_materials_info()
-    experiment_name = 'experiment_23'
+    experiment_name = 'experiment_26'
 
     assets = find_assets("//assets/interior_models/1000_plants_bundle.blend")
     for i, asset in enumerate(assets):
@@ -640,22 +644,20 @@ def run_main():
 
         remove_old_objects()
         logging.debug('Removed objects')
-        add_asset("./assets/interior_models/1000_plants_bundle.blend/Object/", asset)
+        add_asset("./assets/interior_models/1000_plants_bundle.blend/Object/", asset, 0, randomness=True)
         logging.debug('Added asset')
         asset_size = get_asset_size(asset)
         logging.info(asset_size)
         if asset_size[2] > 2.6:
             continue
 
-        camera_position, distance = add_camera(asset_size)
+        camera_position, distance = add_camera(asset_size, randomness=True)
         logging.debug(f'cam at: {camera_position} with distance {distance}')
         logging.debug('Added camera')
 
-        add_asset("./assets/custom_planes/plane_01.blend/Object/", 'Plane_01')
-        obj = bpy.data.objects['Plane_01']
-        obj.rotation_euler = (0, 0, 0)
+        add_asset("./assets/custom_planes/plane_01.blend/Object/", 'Plane_01', rotation_degrees=0, randomness=False)
 
-        add_world_background("//assets/background/abandoned_slipway_4k.exr", 0.5, 270, False)
+        add_world_background("//assets/background/abandoned_slipway_4k.exr", 0.5, 270, randomness=False)
         logging.debug('Added background')
         add_point_lights(asset_size)
 
@@ -673,7 +675,7 @@ def run_main():
 
         # create_base_plane()
         # hdri = ['cloudy_vondelpark_4k', 'abandoned_slipway_4k']
-        add_world_background("//assets/background/dreifaltigkeitsberg_4k.exr", 1.0, 90, True)
+        add_world_background("//assets/background/dreifaltigkeitsberg_4k.exr", 1.0, 90, randomness=True)
         logging.debug('Added background')
 
         take_picture(experiment_name, f'{i}__1_{asset}')
