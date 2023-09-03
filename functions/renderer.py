@@ -1,6 +1,7 @@
 import os
 import bpy
 import uuid
+import bmesh
 import random
 import mathutils
 from math import radians, atan2, sqrt, acos, degrees
@@ -232,7 +233,22 @@ def create_plane_from_coords(dead_axis, dead_coord, bottom_left, top_right, flip
     # UV unwrap the mesh
     bpy.ops.object.mode_set(mode='EDIT')
     bpy.ops.mesh.select_all(action='SELECT')
-    bpy.ops.uv.unwrap(method='ANGLE_BASED', margin=0.001)
+
+    bm = bmesh.from_edit_mesh(obj.data)
+    uv_layer = bm.loops.layers.uv.verify()
+
+    for face in bm.faces:
+        for loop in face.loops:
+            if dead_axis == 'z':
+                loop[uv_layer].uv = loop.vert.co.xy
+            elif dead_axis == 'x':
+                loop[uv_layer].uv = loop.vert.co.yz
+            else:
+                loop[uv_layer].uv = loop.vert.co.xz
+
+    bmesh.update_edit_mesh(obj.data)
+
+    # bpy.ops.uv.unwrap(method='ANGLE_BASED', margin=0.001)
     bpy.ops.object.mode_set(mode='OBJECT')
 
     # subdivision modifier
@@ -249,13 +265,6 @@ def create_plane_from_coords(dead_axis, dead_coord, bottom_left, top_right, flip
     if has_texture:
         mat = bpy.data.materials[material_name]
         nodes = mat.node_tree.nodes
-        x_scale = abs(top_right[0] - bottom_left[0])
-        y_scale = abs(top_right[1] - bottom_left[1])
-        if dead_axis == 'x':
-            nodes['Mapping'].inputs['Scale'].default_value = (y_scale, x_scale, 1.0)
-            nodes['Mapping'].inputs['Rotation'].default_value = (0, 0, radians(90))
-        else:
-            nodes['Mapping'].inputs['Scale'].default_value = (x_scale, y_scale, 1.0)
 
         if flip:
             nodes['Displacement'].inputs[2].default_value = -nodes['Displacement'].inputs[2].default_value
@@ -520,10 +529,10 @@ def define_skip_assets():
 
 
 def run_main():
-    customize_render_quality(show_background=False, high_quality=True)
+    customize_render_quality(show_background=False, high_quality=False)
     to_skip = define_skip_assets()
     materials = get_materials_info()
-    experiment_name = 'experiment_20'
+    experiment_name = 'experiment_21'
 
     assets = find_assets("//assets/interior_models/1000_plants_bundle.blend")
     for i, asset in enumerate(assets):
@@ -573,6 +582,23 @@ def run_main():
         print('Took picture')
 
     print('Done!')
+
+    # for i, material in enumerate(materials.keys()):
+    #     if len(materials[material]['types']) > 0:
+    #         remove_old_objects()
+    #         add_camera((1, 1, 1))
+
+    #         create_plane_from_coords('z', 0, (-1, -2), (1, 1), False, materials[material])
+    #         create_plane_from_coords('z', 2, (-1, -2), (1, 1), True, materials[material])
+    #         create_plane_from_coords('y', 1, (-1, 0), (1, 2), False, materials[material])
+    #         create_plane_from_coords('x', -1, (-2, 0), (1, 2), False, materials[material])
+    #         create_plane_from_coords('x', 1, (0, 0), (1, 2), True, materials[material])
+
+    #         add_world_background("//assets/background/abandoned_slipway_4k.exr", 1.0)
+
+    #         take_picture(experiment_name, f'{i}____{material}')
+
+    # print('Done!')
 
 
 run_main()
