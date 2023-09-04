@@ -627,6 +627,32 @@ def define_skip_assets():
     return to_skip
 
 
+def create_room(asset_size, camera_position, materials, randomness=True):
+    x_left_random = random.random() if randomness else 0.5
+    x_right_random = random.random() if randomness else 0.5
+    y_behind_random = random.random() if randomness else 0.5
+    y_front_random = random.random() if randomness else 0.5
+    z_random = random.random() if randomness else 0.5
+
+    z_top = max(asset_size[2] + 0.2, 2) + (z_random * 1.2)
+    x_left = -((asset_size[0] / 2) + 0.2 + (x_left_random * 2.8))
+    x_right = ((asset_size[0] / 2) + 0.2 + (x_right_random * 2.8))
+    y_behind = (asset_size[1] / 2) + 0.05 + (y_behind_random * 0.45)
+    y_front = camera_position[1] - 0.2 - (y_front_random * 2.8)
+
+    width = round(x_right - x_left, 2)
+    depth = round(y_behind - y_front, 2)
+    height = round(z_top, 2)
+
+    logging.info(f'Room size: width = {width}, depth = {depth}, height = {height}')
+
+    create_plane_from_coords('z', 0, (x_left, y_front), (x_right, y_behind), False, materials['laminate_floor_02'])
+    create_plane_from_coords('z', z_top, (x_left, y_front), (x_right, y_behind), True, materials['ceiling_interior'])
+    create_plane_from_coords('y', y_behind, (x_left, 0), (x_right, z_top), False, materials['brick_wall_02'])
+    create_plane_from_coords('x', x_left, (y_front, 0), (y_behind, z_top), False, materials['concrete_wall_008'])
+    create_plane_from_coords('x', x_right, (y_front, 0), (y_behind, z_top), True, materials['brick_wall_006'])
+
+
 def run_main():
     logging.info("Started Program")
 
@@ -667,13 +693,8 @@ def run_main():
             bpy.data.objects[object].hide_render = True
             bpy.data.objects[object].hide_viewport = True
 
-        create_plane_from_coords('z', 0, (-1, -2), (1, 1), False, materials['laminate_floor_02'])
-        create_plane_from_coords('z', 2, (-1, -2), (1, 1), True, materials['ceiling_interior'])
-        create_plane_from_coords('y', 1, (-1, 0), (1, 2), False, materials['brick_wall_02'])
-        create_plane_from_coords('x', -1, (-2, 0), (1, 2), False, materials['concrete_wall_008'])
-        create_plane_from_coords('x', 1, (0, 0), (1, 2), True, materials['brick_wall_006'])
+        create_room(asset_size, camera_position, materials, True)
 
-        # create_base_plane()
         # hdri = ['cloudy_vondelpark_4k', 'abandoned_slipway_4k']
         add_world_background("//assets/background/dreifaltigkeitsberg_4k.exr", 1.0, 90, randomness=True)
         logging.debug('Added background')
