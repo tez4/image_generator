@@ -640,14 +640,46 @@ def create_room(asset_size, camera_position, materials, randomness=True):
     y_behind = (asset_size[1] / 2) + 0.05 + (y_behind_random * 0.45)
     y_front = camera_position[1] - 0.2 - (y_front_random * 2.8)
 
+    width = x_right - x_left
+    depth = y_behind - y_front
+
+    if x_right - x_left < 1:
+        x_left -= (1 - width) / 2
+        x_right += (1 - width) / 2
+
+    if y_behind - y_front < 1:
+        y_front -= (1 - depth) / 2
+        y_behind += (1 - depth) / 2
+
     width = round(x_right - x_left, 2)
     depth = round(y_behind - y_front, 2)
     height = round(z_top, 2)
 
     logging.info(f'Room size: width = {width}, depth = {depth}, height = {height}')
 
-    create_plane_from_coords('z', 0, (x_left, y_front), (x_right, y_behind), False, materials['laminate_floor_02'])
-    create_plane_from_coords('z', z_top, (x_left, y_front), (x_right, y_behind), True, materials['ceiling_interior'])
+    overlap = 0.1
+
+    # floor
+    create_plane_from_coords(
+        'z',
+        0,
+        (x_left - overlap, y_front - overlap),
+        (x_right + overlap, y_behind + overlap),
+        False,
+        materials['laminate_floor_02']
+    )
+
+    # roof
+    create_plane_from_coords(
+        'z',
+        z_top,
+        (x_left - overlap, y_front - overlap),
+        (x_right + overlap, y_behind + overlap),
+        True,
+        materials['ceiling_interior']
+    )
+
+    # walls
     create_plane_from_coords('y', y_behind, (x_left, 0), (x_right, z_top), False, materials['brick_wall_02'])
     create_plane_from_coords('x', x_left, (y_front, 0), (y_behind, z_top), False, materials['concrete_wall_008'])
     create_plane_from_coords('x', x_right, (y_front, 0), (y_behind, z_top), True, materials['brick_wall_006'])
@@ -663,7 +695,7 @@ def run_main():
 
     assets = find_assets("//assets/interior_models/1000_plants_bundle.blend")
     for i, asset in enumerate(assets):
-        if i > 1:
+        if i > 0:
             break
         if asset in to_skip:
             continue
