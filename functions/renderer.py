@@ -1,6 +1,7 @@
 import os
 import bpy
 import uuid
+import math
 import bmesh
 import random
 import mathutils
@@ -679,10 +680,58 @@ def create_room(asset_size, camera_position, materials, randomness=True):
         materials['ceiling_interior']
     )
 
-    # walls
-    create_plane_from_coords('y', y_behind, (x_left, 0), (x_right, z_top), False, materials['brick_wall_02'])
-    create_plane_from_coords('x', x_left, (y_front, 0), (y_behind, z_top), False, materials['concrete_wall_008'])
-    create_plane_from_coords('x', x_right, (y_front, 0), (y_behind, z_top), True, materials['brick_wall_006'])
+    # product wall
+    create_plane_from_coords(
+        'y', y_behind, (x_left - overlap, 0), (x_right + overlap, z_top), False, materials['brick_wall_02']
+    )
+
+    # other walls
+    for dead_axis, dead_coord, left, right, flip, material in zip(
+        ['x', 'x', 'y'],
+        [x_left, x_right, y_front],
+        [y_front, y_front, x_left],
+        [y_behind, y_behind, x_right],
+        [False, True, True],
+        [materials['concrete_wall_008'], materials['brick_wall_006'], materials['brick_wall_02']]
+    ):
+        windows_random = random.random() if randomness else 0.5
+        wall_border_random = random.random() if randomness else 0.5
+        window_width_random = random.random() if randomness else 0.5
+
+        wall_width = right - left
+        windows = max(math.floor(windows_random * wall_width), 1)
+        wall_border = (wall_width - windows) * wall_border_random
+        window_space = (wall_width - wall_border) / windows
+        window_width = min(window_space - 0.2, max(0.8, window_space * window_width_random))
+        window_side_space = (window_space - window_width) / 2
+        border_space = window_side_space + wall_border / 2
+
+        logging.info(f'wall: {dead_axis} {round(dead_coord, 2)} / width: {round(wall_width, 2)}, windows: {windows} \
+border space: {round(border_space, 2)}')
+
+        create_plane_from_coords(
+            dead_axis, dead_coord, (left - overlap, 0), (left + border_space, z_top), flip, material
+        )
+        create_plane_from_coords(
+            dead_axis, dead_coord, (right - border_space, 0), (right + overlap, z_top), flip, material
+        )
+
+        if windows > 1:
+            for i in range(0, windows - 1):
+                create_plane_from_coords(
+                    dead_axis,
+                    dead_coord,
+                    (left + border_space + window_width + i * (window_space), 0),
+                    (left + border_space + window_width + (window_side_space * 2) + i * (window_space), z_top),
+                    flip,
+                    material
+                )
+
+        # create_plane_from_coords(dead_axis, dead_coord, (left, 0), (right, z_top), flip, material)
+
+    # create_plane_from_coords('x', x_left, (y_front, 0), (y_behind, z_top), False, materials['concrete_wall_008'])
+    # create_plane_from_coords('x', x_right, (y_front, 0), (y_behind, z_top), True, materials['brick_wall_006'])
+    # create_plane_from_coords('y', y_front, (x_left, 0), (x_right, z_top), True, materials['brick_wall_02'])
 
 
 def run_main():
@@ -695,7 +744,9 @@ def run_main():
 
     assets = find_assets("//assets/interior_models/1000_plants_bundle.blend")
     for i, asset in enumerate(assets):
-        if i > 0:
+        if i == 0:
+            continue
+        if i > 1:
             break
         if asset in to_skip:
             continue
