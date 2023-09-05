@@ -628,6 +628,43 @@ def define_skip_assets():
     return to_skip
 
 
+def create_window_wall(dead_axis, dead_coord, left, right, z_top, flip, material, overlap, randomness):
+    windows_random = random.random() if randomness else 0.5
+    wall_border_random = random.random() if randomness else 0.5
+    window_width_random = random.random() if randomness else 0.5
+
+    wall_width = right - left
+    windows = max(math.floor(windows_random * wall_width), 1)
+    wall_border = (wall_width - windows) * wall_border_random
+    window_space = (wall_width - wall_border) / windows
+    window_width = min(window_space - 0.2, max(0.8, window_space * window_width_random))
+    window_side_space = (window_space - window_width) / 2
+    border_space = window_side_space + wall_border / 2
+
+    logging.info(f'wall: {dead_axis} {round(dead_coord, 2)} / width: {round(wall_width, 2)}, windows: {windows} \
+border space: {round(border_space, 2)}')
+
+    create_plane_from_coords(
+        dead_axis, dead_coord, (left - overlap, 0 - overlap), (left + border_space, z_top + overlap), flip, material
+    )
+    create_plane_from_coords(
+        dead_axis, dead_coord, (right - border_space, 0 - overlap), (right + overlap, z_top + overlap), flip, material
+    )
+
+    if windows <= 1:
+        return
+
+    for i in range(0, windows - 1):
+        create_plane_from_coords(
+            dead_axis,
+            dead_coord,
+            (left + border_space + window_width + i * (window_space), 0 - overlap),
+            (left + border_space + window_width + (window_side_space * 2) + i * (window_space), z_top + overlap),
+            flip,
+            material
+        )
+
+
 def create_room(asset_size, camera_position, materials, randomness=True):
     x_left_random = random.random() if randomness else 0.5
     x_right_random = random.random() if randomness else 0.5
@@ -682,7 +719,12 @@ def create_room(asset_size, camera_position, materials, randomness=True):
 
     # product wall
     create_plane_from_coords(
-        'y', y_behind, (x_left - overlap, 0), (x_right + overlap, z_top), False, materials['brick_wall_02']
+        'y',
+        y_behind,
+        (x_left - overlap, 0 - overlap),
+        (x_right + overlap, z_top + overlap),
+        False,
+        materials['brick_wall_02']
     )
 
     # other walls
@@ -694,44 +736,7 @@ def create_room(asset_size, camera_position, materials, randomness=True):
         [False, True, True],
         [materials['concrete_wall_008'], materials['brick_wall_006'], materials['brick_wall_02']]
     ):
-        windows_random = random.random() if randomness else 0.5
-        wall_border_random = random.random() if randomness else 0.5
-        window_width_random = random.random() if randomness else 0.5
-
-        wall_width = right - left
-        windows = max(math.floor(windows_random * wall_width), 1)
-        wall_border = (wall_width - windows) * wall_border_random
-        window_space = (wall_width - wall_border) / windows
-        window_width = min(window_space - 0.2, max(0.8, window_space * window_width_random))
-        window_side_space = (window_space - window_width) / 2
-        border_space = window_side_space + wall_border / 2
-
-        logging.info(f'wall: {dead_axis} {round(dead_coord, 2)} / width: {round(wall_width, 2)}, windows: {windows} \
-border space: {round(border_space, 2)}')
-
-        create_plane_from_coords(
-            dead_axis, dead_coord, (left - overlap, 0), (left + border_space, z_top), flip, material
-        )
-        create_plane_from_coords(
-            dead_axis, dead_coord, (right - border_space, 0), (right + overlap, z_top), flip, material
-        )
-
-        if windows > 1:
-            for i in range(0, windows - 1):
-                create_plane_from_coords(
-                    dead_axis,
-                    dead_coord,
-                    (left + border_space + window_width + i * (window_space), 0),
-                    (left + border_space + window_width + (window_side_space * 2) + i * (window_space), z_top),
-                    flip,
-                    material
-                )
-
-        # create_plane_from_coords(dead_axis, dead_coord, (left, 0), (right, z_top), flip, material)
-
-    # create_plane_from_coords('x', x_left, (y_front, 0), (y_behind, z_top), False, materials['concrete_wall_008'])
-    # create_plane_from_coords('x', x_right, (y_front, 0), (y_behind, z_top), True, materials['brick_wall_006'])
-    # create_plane_from_coords('y', y_front, (x_left, 0), (x_right, z_top), True, materials['brick_wall_02'])
+        create_window_wall(dead_axis, dead_coord, left, right, z_top, flip, material, overlap, randomness)
 
 
 def run_main():
