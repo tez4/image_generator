@@ -720,33 +720,51 @@ def create_room(asset_size, camera_position, materials, randomness=True):
     overlap = 0.1
 
     # floor
+    if randomness:
+        floor_materials = [material for material, value in materials.items() if 'floor' in value['types']]
+        floor_material = materials[floor_materials[random.randint(0, len(floor_materials) - 1)]]
+    else:
+        floor_material = materials['laminate_floor_02']
+
     create_texture_plane(
         'z',
         0,
         (x_left - overlap, y_front - overlap),
         (x_right + overlap, y_behind + overlap),
         False,
-        materials['laminate_floor_02']
+        floor_material
     )
 
-    # roof
+    # ceiling
+    if randomness:
+        ceiling_materials = [material for material, value in materials.items() if 'ceiling' in value['types']]
+        ceiling_material = materials[ceiling_materials[random.randint(0, len(ceiling_materials) - 1)]]
+    else:
+        ceiling_material = materials['ceiling_interior']
+
     create_texture_plane(
         'z',
         z_top,
         (x_left - overlap, y_front - overlap),
         (x_right + overlap, y_behind + overlap),
         True,
-        materials['ceiling_interior']
+        ceiling_material
     )
 
     # product wall
+    if randomness:
+        wall_materials = [material for material, value in materials.items() if 'wall' in value['types']]
+        wall_material = materials[wall_materials[random.randint(0, len(wall_materials) - 1)]]
+    else:
+        wall_material = materials['brick_wall_02']
+
     create_texture_plane(
         'y',
         y_behind,
         (x_left - overlap, 0 - overlap),
         (x_right + overlap, z_top + overlap),
         False,
-        materials['brick_wall_02']
+        wall_material
     )
 
     # other walls
@@ -807,10 +825,10 @@ def run_main():
             bpy.data.objects[object].hide_render = True
             bpy.data.objects[object].hide_viewport = True
 
-        create_room(asset_size, camera_position, materials, True)
+        create_room(asset_size, camera_position, materials, randomness=True)
 
         # hdri = ['cloudy_vondelpark_4k', 'abandoned_slipway_4k']
-        add_world_background("//assets/background/dreifaltigkeitsberg_4k.exr", 1.0, 90, randomness=True)
+        add_world_background("//assets/background/dreifaltigkeitsberg_4k.exr", 5.0, 90, randomness=True)
         logging.debug('Added background')
 
         take_picture(experiment_name, f'{i}__1_{asset}')
