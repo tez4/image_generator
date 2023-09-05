@@ -321,7 +321,32 @@ def convert_coords(dead_axis='z', dead_coord=0, bottom_left=(0, 0), top_right=(1
     return coords
 
 
-def create_plane_from_coords(dead_axis, dead_coord, bottom_left, top_right, flip, material, has_texture=True):
+def create_plane(dead_axis, dead_coord, bottom_left, top_right, material_name):
+    coords = convert_coords(dead_axis, dead_coord, bottom_left, top_right)
+
+    # create names
+    object_id = uuid.uuid4().int
+    mesh_name = f"Plane_{object_id}"
+    obj_name = f"Plane_Object_{object_id}"
+
+    # Create a new mesh
+    mesh = bpy.data.meshes.new(name=mesh_name)
+    obj = bpy.data.objects.new(obj_name, mesh)
+    bpy.context.collection.objects.link(obj)
+
+    # Make sure nothing is selected, then select the object by its name
+    bpy.ops.object.select_all(action='DESELECT')
+    bpy.data.objects[obj_name].select_set(True)
+    bpy.context.view_layer.objects.active = bpy.data.objects[obj_name]
+
+    # Create the vertices and faces
+    mesh.from_pydata(coords, [], [(0, 1, 2, 3)])
+    mesh.update()
+
+    assign_material_to_object(obj_name, material_name)
+
+
+def create_texture_plane(dead_axis, dead_coord, bottom_left, top_right, flip, material, has_texture=True):
     coords = convert_coords(dead_axis, dead_coord, bottom_left, top_right)
 
     # create names
@@ -361,8 +386,6 @@ def create_plane_from_coords(dead_axis, dead_coord, bottom_left, top_right, flip
                 loop[uv_layer].uv = loop.vert.co.xz
 
     bmesh.update_edit_mesh(obj.data)
-
-    # bpy.ops.uv.unwrap(method='ANGLE_BASED', margin=0.001)
     bpy.ops.object.mode_set(mode='OBJECT')
 
     # subdivision modifier
@@ -628,7 +651,7 @@ def define_skip_assets():
     return to_skip
 
 
-def create_window_wall(dead_axis, dead_coord, left, right, z_top, flip, material, overlap, randomness):
+def create_window_wall(dead_axis, dead_coord, left, right, z_top, material_name, overlap, randomness):
     windows_random = random.random() if randomness else 0.5
     wall_border_random = random.random() if randomness else 0.5
     window_width_random = random.random() if randomness else 0.5
@@ -644,24 +667,23 @@ def create_window_wall(dead_axis, dead_coord, left, right, z_top, flip, material
     logging.info(f'wall: {dead_axis} {round(dead_coord, 2)} / width: {round(wall_width, 2)}, windows: {windows} \
 border space: {round(border_space, 2)}')
 
-    create_plane_from_coords(
-        dead_axis, dead_coord, (left - overlap, 0 - overlap), (left + border_space, z_top + overlap), flip, material
+    create_plane(
+        dead_axis, dead_coord, (left - overlap, 0 - overlap), (left + border_space, z_top + overlap), material_name
     )
-    create_plane_from_coords(
-        dead_axis, dead_coord, (right - border_space, 0 - overlap), (right + overlap, z_top + overlap), flip, material
+    create_plane(
+        dead_axis, dead_coord, (right - border_space, 0 - overlap), (right + overlap, z_top + overlap), material_name
     )
 
     if windows <= 1:
         return
 
     for i in range(0, windows - 1):
-        create_plane_from_coords(
+        create_plane(
             dead_axis,
             dead_coord,
             (left + border_space + window_width + i * (window_space), 0 - overlap),
             (left + border_space + window_width + (window_side_space * 2) + i * (window_space), z_top + overlap),
-            flip,
-            material
+            material_name
         )
 
 
@@ -698,7 +720,7 @@ def create_room(asset_size, camera_position, materials, randomness=True):
     overlap = 0.1
 
     # floor
-    create_plane_from_coords(
+    create_texture_plane(
         'z',
         0,
         (x_left - overlap, y_front - overlap),
@@ -708,7 +730,7 @@ def create_room(asset_size, camera_position, materials, randomness=True):
     )
 
     # roof
-    create_plane_from_coords(
+    create_texture_plane(
         'z',
         z_top,
         (x_left - overlap, y_front - overlap),
@@ -718,7 +740,7 @@ def create_room(asset_size, camera_position, materials, randomness=True):
     )
 
     # product wall
-    create_plane_from_coords(
+    create_texture_plane(
         'y',
         y_behind,
         (x_left - overlap, 0 - overlap),
@@ -728,15 +750,19 @@ def create_room(asset_size, camera_position, materials, randomness=True):
     )
 
     # other walls
-    for dead_axis, dead_coord, left, right, flip, material in zip(
+    material = materials['piano_key']
+    material_name = f'{material["name"]}_{uuid.uuid4().int}'
+    append_material_from_library(material['file'], material['name'])
+    bpy.data.materials[material['name']].name = material_name
+
+    for dead_axis, dead_coord, left, right, material_name in zip(
         ['x', 'x', 'y'],
         [x_left, x_right, y_front],
         [y_front, y_front, x_left],
         [y_behind, y_behind, x_right],
-        [False, True, True],
-        [materials['concrete_wall_008'], materials['brick_wall_006'], materials['brick_wall_02']]
+        [material_name, material_name, material_name]
     ):
-        create_window_wall(dead_axis, dead_coord, left, right, z_top, flip, material, overlap, randomness)
+        create_window_wall(dead_axis, dead_coord, left, right, z_top, material_name, overlap, randomness)
 
 
 def run_main():
