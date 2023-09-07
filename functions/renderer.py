@@ -664,6 +664,9 @@ def create_window_wall(dead_axis, dead_coord, left, right, z_top, material_name,
     windows_random = random.random() if randomness else 0.5
     wall_border_random = random.random() if randomness else 0.5
     window_width_random = random.random() if randomness else 0.5
+    is_window_random = random.randint(0, 1) if randomness else 1
+    below_window_random = random.random() if randomness else 0.5
+    above_window_random = random.random() if randomness else 0.5
 
     wall_width = right - left
     windows = max(math.floor(windows_random * wall_width), 1)
@@ -672,6 +675,8 @@ def create_window_wall(dead_axis, dead_coord, left, right, z_top, material_name,
     window_width = min(window_space - 0.2, max(0.8, window_space * window_width_random))
     window_side_space = (window_space - window_width) / 2
     border_space = window_side_space + wall_border / 2
+    below_window = 0.8 + below_window_random * 0.4 if is_window_random else 0.05
+    above_window = 0.1 + above_window_random * 0.4
 
     logging.info(f'wall: {dead_axis} {round(dead_coord, 2)} / width: {round(wall_width, 2)}, windows: {windows} \
 border space: {round(border_space, 2)}')
@@ -686,14 +691,33 @@ border space: {round(border_space, 2)}')
     if windows <= 1:
         return
 
-    for i in range(0, windows - 1):
+    for i in range(0, windows):
+        right_window_side = left + border_space + window_width + i * (window_space)
+
         create_plane(
             dead_axis,
             dead_coord,
-            (left + border_space + window_width + i * (window_space), 0 - overlap),
-            (left + border_space + window_width + (window_side_space * 2) + i * (window_space), z_top + overlap),
+            (right_window_side - window_width, 0 - overlap),
+            (right_window_side, below_window),
             material_name
         )
+
+        create_plane(
+            dead_axis,
+            dead_coord,
+            (right_window_side - window_width, z_top - above_window),
+            (right_window_side, z_top + overlap),
+            material_name
+        )
+
+        if i < windows - 1:
+            create_plane(
+                dead_axis,
+                dead_coord,
+                (right_window_side, 0 - overlap),
+                (right_window_side + (window_side_space * 2), z_top + overlap),
+                material_name
+            )
 
 
 def create_room(asset_size, camera_position, materials, randomness=True):
@@ -799,41 +823,41 @@ def run_main():
     to_skip = define_skip_assets()
     materials = get_materials_info()
     assets = get_assets_info()
-    experiment_name = 'experiment_37'
+    experiment_name = 'experiment_38'
 
     #  "beds", "cabinets",  "chairs"
     # ["decor", "electronics", "lamps", "plants", "shelves", "sofas", "tables", "tablesets"]
     # assets = {a: v for a, v in assets.items() if v["category"] == category}
     # asset = assets[list(assets.keys())[i]]
-    for i in range(5):
-        asset = get_random_asset(assets, nonrandom_asset="cabinet_38_02", randomness=True)
+    for i in range(1):
+        asset = get_random_asset(assets, nonrandom_asset="cabinet_38_02", randomness=False)
         logging.info(f"Got asset '{asset['name']}' of type '{asset['category']}'")
 
         if asset["name"] in to_skip:
             continue
 
         remove_old_objects()
-        add_asset(f"./assets/interior_models/{asset['file']}/Object/", asset['name'], 0, randomness=True)
+        add_asset(f"./assets/interior_models/{asset['file']}/Object/", asset['name'], 0, randomness=False)
         asset_size = get_asset_size(asset['name'])
         if asset_size[2] > 2.6:
             continue
 
-        camera_position, camera_rotation, distance = add_camera(asset_size, randomness=True)
+        camera_position, camera_rotation, distance = add_camera(asset_size, randomness=False)
         bpy.data.objects[asset['name']].rotation_euler[2] += radians(-camera_rotation)
         logging.debug(f'cam at: {camera_position} with distance {distance}')
 
-        add_asset("./assets/custom_planes/plane_03.blend/Object/", 'Plane_03', rotation_degrees=0, randomness=False)
+        # add_asset("./assets/custom_planes/plane_03.blend/Object/", 'Plane_03', rotation_degrees=0, randomness=False)
 
-        add_world_background("//assets/background/abandoned_slipway_4k.exr", 0.3, 270, randomness=False)
-        add_point_lights(asset_size)
+        # add_world_background("//assets/background/abandoned_slipway_4k.exr", 0.3, 270, randomness=False)
+        # add_point_lights(asset_size)
 
-        take_picture(experiment_name, f'{i}__2')
+        # take_picture(experiment_name, f'{i}__2')
 
-        for object in ["Plane_03", "back_left_light", "back_right_light", "front_light"]:
-            bpy.data.objects[object].hide_render = True
-            bpy.data.objects[object].hide_viewport = True
+        # for object in ["Plane_03", "back_left_light", "back_right_light", "front_light"]:
+        #     bpy.data.objects[object].hide_render = True
+        #     bpy.data.objects[object].hide_viewport = True
 
-        create_room(asset_size, camera_position, materials, randomness=True)
+        create_room(asset_size, camera_position, materials, randomness=False)
 
         hdri = get_random_hdri(randomness=True)
         add_world_background(hdri, 5.0, 90, randomness=True)
