@@ -491,6 +491,7 @@ def customize_render_quality(show_background=False, high_quality=True, image_siz
         bpy.data.scenes['Scene'].render.engine = 'CYCLES'
         bpy.data.scenes['Scene'].cycles.device = 'GPU'
         bpy.context.preferences.addons['cycles'].preferences.compute_device_type = 'CUDA'
+        bpy.data.scenes['Scene'].cycles.adaptive_threshold = 0.1
     else:
         bpy.data.scenes['Scene'].render.engine = 'BLENDER_EEVEE'
         bpy.context.scene.render.film_transparent = not show_background
@@ -768,11 +769,11 @@ def create_room(asset_size, camera_position, materials, randomness=True):
 def run_main():
     logging.info("Started Program")
 
-    customize_render_quality(show_background=True, high_quality=False)
+    customize_render_quality(show_background=True, high_quality=True)
     to_skip = define_skip_assets()
     materials = get_materials_info()
     assets = get_assets_info()
-    experiment_name = 'experiment_33'
+    experiment_name = 'experiment_35'
 
     #  "beds", "cabinets",  "chairs"
     # ["decor", "electronics", "lamps", "plants", "shelves", "sofas", "tables", "tablesets"]
@@ -794,14 +795,14 @@ def run_main():
         camera_position, distance = add_camera(asset_size, randomness=True)
         logging.debug(f'cam at: {camera_position} with distance {distance}')
 
-        add_asset("./assets/custom_planes/plane_01.blend/Object/", 'Plane_01', rotation_degrees=0, randomness=False)
+        add_asset("./assets/custom_planes/plane_03.blend/Object/", 'Plane_03', rotation_degrees=0, randomness=False)
 
         add_world_background("//assets/background/abandoned_slipway_4k.exr", 0.5, 270, randomness=False)
         add_point_lights(asset_size)
 
         take_picture(experiment_name, f'{i}__2')
 
-        for object in ["Plane_01", "back_left_light", "back_right_light", "front_light"]:
+        for object in ["Plane_03", "back_left_light", "back_right_light", "front_light"]:
             bpy.data.objects[object].hide_render = True
             bpy.data.objects[object].hide_viewport = True
 
