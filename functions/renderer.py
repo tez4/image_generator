@@ -291,6 +291,22 @@ def get_materials_info():
     return materials
 
 
+def get_random_hdri(randomness=True):
+    files = os.listdir("./assets/background/")
+    exr_files = [f for f in files if f.endswith(".exr")]
+    assert len(exr_files) > 0, "Should have .exr files in background directory"
+
+    if randomness:
+        exr_file = exr_files[random.randint(0, len(exr_files) - 1)]
+    else:
+        if "dreifaltigkeitsberg_4k.exr" in exr_files:
+            exr_file = "dreifaltigkeitsberg_4k.exr"
+        else:
+            exr_file = exr_files[0]
+
+    return f"//assets/background/{exr_file}"
+
+
 def assign_material_to_object(obj_name, material_name):
     obj = bpy.data.objects[obj_name]
     mat = bpy.data.materials[material_name]
@@ -789,7 +805,7 @@ def run_main():
     customize_render_quality(show_background=True, high_quality=False)
     to_skip = define_skip_assets()
     materials = get_materials_info()
-    experiment_name = 'experiment_26'
+    experiment_name = 'experiment_27'
 
     assets = find_assets("//assets/interior_models/1000_plants_bundle.blend")
     for i, asset in enumerate(assets):
@@ -827,8 +843,8 @@ def run_main():
 
         create_room(asset_size, camera_position, materials, randomness=True)
 
-        # hdri = ['cloudy_vondelpark_4k', 'abandoned_slipway_4k']
-        add_world_background("//assets/background/dreifaltigkeitsberg_4k.exr", 5.0, 90, randomness=True)
+        hdri = get_random_hdri(randomness=True)
+        add_world_background(hdri, 5.0, 90, randomness=True)
         logging.debug('Added background')
 
         take_picture(experiment_name, f'{i}__1_{asset}')
