@@ -144,15 +144,45 @@ def create_glowing_object(material, size=1, location=(0, 0, 0)):
     so.data.materials.append(material)
 
 
-def find_assets(blend_file_path="//assets/interior_models/1000_plants_bundle.blend"):
-    assets = []
+def get_assets_info():
+    assets = {}
 
-    # Read the .blend file
-    with bpy.data.libraries.load(blend_file_path, link=False) as (data_from, _):
-        for value in data_from.objects:
-            assets.append(value)
+    blend_files = [
+        ("1000_beds_bundle", "beds"),
+        ("1000_cabinets_bundle", "cabinets"),
+        ("1000_chairs_bundle", "chairs"),
+        ("1000_decor_bundle", "decor"),
+        ("1000_electronics_bundle", "electronics"),
+        ("1000_lamps_bundle", "lamps"),
+        ("1000_plants_bundle", "plants"),
+        ("1000_shelves_bundle", "shelves"),
+        ("1000_sofas_bundle", "sofas"),
+        ("1000_tables_bundle", "tables"),
+        ("1000_tablesets_bundle", "tablesets"),
+    ]
+
+    for blend_file, category in blend_files:
+        with bpy.data.libraries.load(f"//assets/interior_models/{blend_file}.blend", link=False) as (data_from, _):
+            for value in data_from.objects:
+                assets[value] = {}
+                assets[value]["name"] = value
+                assets[value]["category"] = category
+                assets[value]["file"] = f"{blend_file}.blend"
 
     return assets
+
+
+def get_random_asset(assets, randomness=True):
+    if randomness:
+        index = random.randint(0, len(assets) - 1)
+        asset = assets[list(assets.keys())[index]]
+    else:
+        if "plant_49" in assets:
+            asset = assets["plant_49"]
+        else:
+            asset = assets[list(assets.keys())[0]]
+
+    return asset
 
 
 def add_asset(
@@ -505,7 +535,7 @@ def add_world_background(exr_file_path, strength=1.0, rotation_degrees=0.0, rand
     background_node.inputs[1].default_value = strength
 
 
-def get_asset_size(obj_name='plant_24'):
+def get_asset_size(obj_name):
 
     obj = bpy.data.objects[obj_name]
 
@@ -805,37 +835,32 @@ def run_main():
     customize_render_quality(show_background=True, high_quality=False)
     to_skip = define_skip_assets()
     materials = get_materials_info()
-    experiment_name = 'experiment_27'
+    assets = get_assets_info()
+    experiment_name = 'experiment_28'
 
-    assets = find_assets("//assets/interior_models/1000_plants_bundle.blend")
-    for i, asset in enumerate(assets):
-        if i == 0:
-            continue
-        if i > 1:
-            break
-        if asset in to_skip:
+    # {a: v for a, v in test_assets.items() if v["category"] == 'beds'}
+    for i in range(2):
+        asset = get_random_asset(assets, randomness=False)
+        logging.info(f"Got asset '{asset['name']}' of type '{asset['category']}'")
+
+        if asset["name"] in to_skip:
             continue
 
         remove_old_objects()
-        logging.debug('Removed objects')
-        add_asset("./assets/interior_models/1000_plants_bundle.blend/Object/", asset, 0, randomness=True)
-        logging.debug('Added asset')
-        asset_size = get_asset_size(asset)
-        logging.info(asset_size)
+        add_asset(f"./assets/interior_models/{asset['file']}/Object/", asset['name'], 0, randomness=True)
+        asset_size = get_asset_size(asset['name'])
         if asset_size[2] > 2.6:
             continue
 
         camera_position, distance = add_camera(asset_size, randomness=True)
         logging.debug(f'cam at: {camera_position} with distance {distance}')
-        logging.debug('Added camera')
 
         add_asset("./assets/custom_planes/plane_01.blend/Object/", 'Plane_01', rotation_degrees=0, randomness=False)
 
         add_world_background("//assets/background/abandoned_slipway_4k.exr", 0.5, 270, randomness=False)
-        logging.debug('Added background')
         add_point_lights(asset_size)
 
-        take_picture(experiment_name, f'{i}__2_{asset}')
+        take_picture(experiment_name, f'{i}__2')
 
         for object in ["Plane_01", "back_left_light", "back_right_light", "front_light"]:
             bpy.data.objects[object].hide_render = True
@@ -845,10 +870,8 @@ def run_main():
 
         hdri = get_random_hdri(randomness=True)
         add_world_background(hdri, 5.0, 90, randomness=True)
-        logging.debug('Added background')
 
-        take_picture(experiment_name, f'{i}__1_{asset}')
-        logging.debug('Took picture')
+        take_picture(experiment_name, f'{i}__1')
 
     logging.info('Done!')
 
