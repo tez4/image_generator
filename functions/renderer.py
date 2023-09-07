@@ -130,13 +130,13 @@ def get_assets_info():
     return assets
 
 
-def get_random_asset(assets, randomness=True):
+def get_random_asset(assets, nonrandom_asset="plant_49", randomness=True):
     if randomness:
         index = random.randint(0, len(assets) - 1)
         asset = assets[list(assets.keys())[index]]
     else:
-        if "plant_49" in assets:
-            asset = assets["plant_49"]
+        if nonrandom_asset in assets:
+            asset = assets[nonrandom_asset]
         else:
             asset = assets[list(assets.keys())[0]]
 
@@ -539,18 +539,37 @@ def angle_of_vectors(a, b):
     return acos(min(1, max(-1, dot_product / mod)))
 
 
+def rotate_object_around_point(object_name, point=(0, 0, 0), rotation=45, axis='Z'):
+
+    bpy.ops.object.select_all(action='DESELECT')
+    if object_name in bpy.data.objects:
+        obj = bpy.data.objects[object_name]
+        obj.select_set(True)
+        bpy.context.view_layer.objects.active = obj
+
+        original_pivot = bpy.context.scene.tool_settings.transform_pivot_point
+        bpy.context.scene.tool_settings.transform_pivot_point = 'CURSOR'
+        bpy.context.scene.cursor.location = point
+
+        bpy.ops.transform.rotate(value=radians(rotation), orient_axis=axis)
+
+        bpy.context.scene.tool_settings.transform_pivot_point = original_pivot
+
+    else:
+        logging.warning(f"Object named {object_name} does not exist in the current scene.")
+
+
 def add_camera(asset_size, randomness=True):
     x, y, z = asset_size
     y_camera_random = random.random() if randomness else 0.5
     z_camera_random = random.random() if randomness else 0.5
     y_camera = -((y / 2) + (max(x, z) * (1 + y_camera_random * 2)))
-    z_camera = min(max(max((z * 0.2) + (z_camera_random * z * 1.3), (x + y / 3)), 0.3), 1.8)
+    z_alternative = ((x + y) / 3) + z_camera_random * ((x + y) / 3)
+    z_camera = min(max(max((z * 0.2) + (z_camera_random * z * 1.3), z_alternative), 0.3), 1.8)
     angle = atan2(abs(y_camera), z_camera - (z / 2))
     distance = (abs(y_camera) ** 2 + (z_camera - (z / 2)) ** 2) ** 0.5
 
     camera_position = (0.0, round(y_camera, 6), round(z_camera, 6))
-
-    logging.info(f'cam position and angle: { camera_position} {angle}')
     cam_data = bpy.data.cameras.new(name="Camera")
     cam_object = bpy.data.objects.new("ProductCamera", cam_data)
     bpy.context.collection.objects.link(cam_object)
@@ -576,7 +595,14 @@ def add_camera(asset_size, randomness=True):
     # bpy.context.active_object.data.dof.focus_distance = 2
     # bpy.context.active_object.data.dof.aperture_fstop = 0.8
 
-    return camera_position, distance
+    camera_rotation_random = random.random() - 0.5 if randomness else 0
+    camera_rotation = camera_rotation_random * 40
+
+    rotate_object_around_point("ProductCamera", rotation=camera_rotation)
+    camera_position = tuple(cam_object.location)
+    logging.info(f'cam position and angle: {camera_position} {angle}')
+
+    return camera_position, camera_rotation, distance
 
 
 def add_point_light(name, location, radius, energy):
@@ -773,14 +799,14 @@ def run_main():
     to_skip = define_skip_assets()
     materials = get_materials_info()
     assets = get_assets_info()
-    experiment_name = 'experiment_35'
+    experiment_name = 'experiment_37'
 
     #  "beds", "cabinets",  "chairs"
     # ["decor", "electronics", "lamps", "plants", "shelves", "sofas", "tables", "tablesets"]
     # assets = {a: v for a, v in assets.items() if v["category"] == category}
     # asset = assets[list(assets.keys())[i]]
-    for i in range(3):
-        asset = get_random_asset(assets, randomness=True)
+    for i in range(5):
+        asset = get_random_asset(assets, nonrandom_asset="cabinet_38_02", randomness=True)
         logging.info(f"Got asset '{asset['name']}' of type '{asset['category']}'")
 
         if asset["name"] in to_skip:
@@ -792,12 +818,13 @@ def run_main():
         if asset_size[2] > 2.6:
             continue
 
-        camera_position, distance = add_camera(asset_size, randomness=True)
+        camera_position, camera_rotation, distance = add_camera(asset_size, randomness=True)
+        bpy.data.objects[asset['name']].rotation_euler[2] += radians(-camera_rotation)
         logging.debug(f'cam at: {camera_position} with distance {distance}')
 
         add_asset("./assets/custom_planes/plane_03.blend/Object/", 'Plane_03', rotation_degrees=0, randomness=False)
 
-        add_world_background("//assets/background/abandoned_slipway_4k.exr", 0.5, 270, randomness=False)
+        add_world_background("//assets/background/abandoned_slipway_4k.exr", 0.3, 270, randomness=False)
         add_point_lights(asset_size)
 
         take_picture(experiment_name, f'{i}__2')
