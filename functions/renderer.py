@@ -660,7 +660,7 @@ def define_skip_assets():
     return to_skip
 
 
-def create_window_wall(dead_axis, dead_coord, left, right, z_top, material_name, overlap, randomness):
+def create_window_wall(dead_axis, dead_coord, left, right, z_top, flip, material_name, overlap, randomness):
     windows_random = random.random() if randomness else 0.5
     wall_border_random = random.random() if randomness else 0.5
     window_width_random = random.random() if randomness else 0.5
@@ -709,6 +709,43 @@ border space: {round(border_space, 2)}')
             (right_window_side, z_top + overlap),
             material_name
         )
+
+        if dead_axis == 'x':
+            dead_border_axis = 'y'
+        else:
+            dead_border_axis = 'x'
+
+        if flip:
+            outside_wall = dead_coord + 0.2
+        else:
+            outside_wall = dead_coord - 0.2
+
+        for coord in [right_window_side - window_width, right_window_side]:
+            create_plane(
+                dead_border_axis,
+                coord,
+                (dead_coord, below_window),
+                (outside_wall, z_top - above_window),
+                material_name
+            )
+
+        for coord in [below_window, z_top - above_window]:
+            if dead_axis == 'x':
+                create_plane(
+                    'z',
+                    coord,
+                    (dead_coord, right_window_side - window_width),
+                    (outside_wall, right_window_side),
+                    material_name
+                )
+            else:
+                create_plane(
+                    'z',
+                    coord,
+                    (right_window_side - window_width, dead_coord),
+                    (right_window_side, outside_wall),
+                    material_name
+                )
 
         if i < windows - 1:
             create_plane(
@@ -806,14 +843,15 @@ def create_room(asset_size, camera_position, materials, randomness=True):
     append_material_from_library(material['file'], material['name'])
     bpy.data.materials[material['name']].name = material_name
 
-    for dead_axis, dead_coord, left, right, material_name in zip(
+    for dead_axis, dead_coord, left, right, flip, material_name in zip(
         ['x', 'x', 'y'],
         [x_left, x_right, y_front],
         [y_front, y_front, x_left],
         [y_behind, y_behind, x_right],
+        [False, True, False],
         [material_name, material_name, material_name]
     ):
-        create_window_wall(dead_axis, dead_coord, left, right, z_top, material_name, overlap, randomness)
+        create_window_wall(dead_axis, dead_coord, left, right, z_top, flip, material_name, overlap, randomness)
 
 
 def run_main():
