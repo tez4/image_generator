@@ -102,48 +102,6 @@ def remove_old_objects():
             k += 1
 
 
-def create_glowing_material():
-    new_material = bpy.data.materials.new(name="GlowingMaterial")
-
-    new_material.use_nodes = True
-    nodes = new_material.node_tree.nodes
-
-    material_output = nodes.get("Material Output")
-    node_emission = nodes.new(type='ShaderNodeEmission')
-
-    node_emission.inputs[0].default_value = (0.0, 0.3, 1.0, 1)
-    node_emission.inputs[1].default_value = 500.0
-
-    links = new_material.node_tree.links
-    links.new(node_emission.outputs[0], material_output.inputs[0])
-
-    return new_material
-
-
-def create_glowing_object(material, size=1, location=(0, 0, 0)):
-    bpy.ops.mesh.primitive_cube_add(size=size, location=location)
-    so = bpy.context.active_object
-
-    so.rotation_euler[0] = 5
-
-    mod_subsurf = so.modifiers.new("My Modifier", "SUBSURF")
-    mod_subsurf.levels = 5
-    mod_subsurf.render_levels = 5
-
-    bpy.ops.object.shade_smooth()
-
-    mod_displace = so.modifiers.new("Displacement", "DISPLACE")
-    mod_displace.strength = 0.03 * size
-
-    new_tex = bpy.data.textures.new("texture", "DISTORTED_NOISE")
-    new_tex.noise_scale = 0.05 * size
-
-    mod_displace.texture = new_tex
-
-    # add material
-    so.data.materials.append(material)
-
-
 def get_assets_info():
     assets = {}
 
@@ -453,37 +411,6 @@ def create_texture_plane(dead_axis, dead_coord, bottom_left, top_right, flip, ma
             nodes['Displacement'].inputs[2].default_value = -nodes['Displacement'].inputs[2].default_value
 
 
-def create_base_plane():
-    # add base plane
-    bpy.ops.mesh.primitive_plane_add(
-        size=250, enter_editmode=False, align='WORLD', location=(0, 0, 0), scale=(1, 1, 1))
-    plane = bpy.context.active_object
-
-    mat = bpy.data.materials.new(name="GlossyWhite")
-
-    mat.use_nodes = True
-    nodes = mat.node_tree.nodes
-
-    # Clear default nodes
-    for node in nodes:
-        nodes.remove(node)
-
-    glossy_shader = nodes.new(type='ShaderNodeBsdfGlossy')
-    glossy_shader.location = (0, 0)
-
-    glossy_shader.inputs["Color"].default_value = (1, 1, 1, 1)  # RGB + Alpha
-    glossy_shader.inputs["Roughness"].default_value = 0.1  # Adjust as needed
-
-    # Add a Material Output node and connect the Glossy shader to it
-    material_output = nodes.new(type='ShaderNodeOutputMaterial')
-    material_output.location = (400, 0)
-    mat.node_tree.links.new(
-        glossy_shader.outputs["BSDF"], material_output.inputs["Surface"])
-
-    # Assign the material to the plane
-    plane.data.materials.append(mat)
-
-
 def add_world_background(exr_file_path, strength=1.0, rotation_degrees=0.0, randomness=False):
     rotation_degrees = random.random() * 360 if randomness else rotation_degrees
 
@@ -616,7 +543,7 @@ def add_camera(asset_size, randomness=True):
     y_camera_random = random.random() if randomness else 0.5
     z_camera_random = random.random() if randomness else 0.5
     y_camera = -((y / 2) + (max(x, z) * (1 + y_camera_random * 2)))
-    z_camera = min(max((z * 0.2) + (z_camera_random * z * 1.3), 0.3), 1.8)
+    z_camera = min(max(max((z * 0.2) + (z_camera_random * z * 1.3), (x + y / 3)), 0.3), 1.8)
     angle = atan2(abs(y_camera), z_camera - (z / 2))
     distance = (abs(y_camera) ** 2 + (z_camera - (z / 2)) ** 2) ** 0.5
 
@@ -664,7 +591,7 @@ def add_point_lights(asset_size):
     x, y, z = asset_size
     x_light = x / 2 * 1.5
     y_light = y / 2 * 1.5
-    z_light = z * 2.5
+    z_light = max(x, y, z) * 2.5
 
     distance_to_center = (x_light ** 2 + y_light ** 2 + (z_light - (z / 2)) ** 2) ** 0.5
     radius = distance_to_center / 6
@@ -687,11 +614,20 @@ def take_picture(folder, image_name):
 
 def define_skip_assets():
     to_skip = [
-        'plant_25',
-        'plant_18',
-        'plant_16',
-        'plant_12',
-        'plant_10',
+        'plant_25', 'plant_18', 'plant_16', 'plant_12', 'plant_10', 'decor_20', 'painting_04', 'decor_27',
+        'decor_07_01', 'decor_07_02', 'decor_05', 'clock_09', 'clock_08', 'clock_07', 'clock_04_02', 'clock_04_01',
+        'lamp_89_02', 'lamp_89_01', 'lamp_88_04', 'lamp_88_03', 'lamp_88_02', 'lamp_88_01', 'lamp_87_02', 'lamp_87_01',
+        'lamp_86_02', 'lamp_86_01', 'lamp_85', 'lamp_84', 'lamp_83', 'lamp_82_04', 'lamp_82_03', 'lamp_82_02',
+        'lamp_82_01', 'lamp_81_08', 'lamp_81_07', 'lamp_81_06', 'lamp_81_05', 'lamp_81_04', 'lamp_81_03', 'lamp_81_02',
+        'lamp_81_01', 'lamp_80', 'lamp_79', 'lamp_78_02', 'lamp_78_01', 'lamp_77', 'lamp_76_02', 'lamp_76_01',
+        'lamp_75_05', 'lamp_75_04', 'lamp_75_03', 'lamp_75_02', 'lamp_75_01', 'lamp_74_13', 'lamp_74_12', 'lamp_74_11',
+        'lamp_74_10', 'lamp_74_09', 'lamp_74_08', 'lamp_74_07', 'lamp_74_06', 'lamp_74_05', 'lamp_74_04', 'lamp_74_03',
+        'lamp_74_02', 'lamp_74_01', 'lamp_73_02', 'lamp_73_01', 'lamp_72', 'lamp_71', 'lamp_70_04', 'lamp_70_03',
+        'lamp_70_02', 'lamp_70_01', 'lamp_69', 'lamp_68', 'lamp_67', 'lamp_66', 'lamp_65', 'lamp_47', 'shelf_87_02',
+        'shelf_87_01', 'shelf_64_02', 'shelf_64_01', 'shelf_52_08', 'shelf_52_07', 'shelf_52_06', 'shelf_52_05',
+        'shelf_52_04', 'shelf_52_03', 'shelf_52_02', 'shelf_52_01', 'shelf_22', 'shelf_20_04', 'shelf_20_03',
+        'shelf_20_02', 'shelf_20_01', 'shelf_18_02', 'shelf_18_01', 'shelf_16_02', 'shelf_16_01', 'shelf_04',
+        'tableset_05'
     ]
 
     return to_skip
@@ -836,11 +772,14 @@ def run_main():
     to_skip = define_skip_assets()
     materials = get_materials_info()
     assets = get_assets_info()
-    experiment_name = 'experiment_28'
+    experiment_name = 'experiment_33'
 
-    # {a: v for a, v in test_assets.items() if v["category"] == 'beds'}
-    for i in range(2):
-        asset = get_random_asset(assets, randomness=False)
+    #  "beds", "cabinets",  "chairs"
+    # ["decor", "electronics", "lamps", "plants", "shelves", "sofas", "tables", "tablesets"]
+    # assets = {a: v for a, v in assets.items() if v["category"] == category}
+    # asset = assets[list(assets.keys())[i]]
+    for i in range(3):
+        asset = get_random_asset(assets, randomness=True)
         logging.info(f"Got asset '{asset['name']}' of type '{asset['category']}'")
 
         if asset["name"] in to_skip:
