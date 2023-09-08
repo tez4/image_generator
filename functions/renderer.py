@@ -208,6 +208,11 @@ def get_materials_info():
             'file': 'concrete_wall_008_4k.blend',
             'types': ['wall']
         },
+        'cw-glass-universe': {
+            'name': 'cw-glass-universe',
+            'file': 'cw-glass-universe.blend',
+            'types': []
+        },
         'garage_floor': {
             'name': 'garage_floor',
             'file': 'garage_floor_4k.blend',
@@ -272,6 +277,51 @@ def get_materials_info():
             'name': 'short_bricks_floor',
             'file': 'short_bricks_floor_4k.blend',
             'types': ['floor']
+        },
+        'sy_alum_matte': {
+            'name': 'sy_alum_matte',
+            'file': 'sy_alum_matte.blend',
+            'types': []
+        },
+        'sy_alum_shiny': {
+            'name': 'sy_alum_shiny',
+            'file': 'sy_alum_shiny.blend',
+            'types': []
+        },
+        'sy_glass_EK': {
+            'name': 'sy_glass_EK',
+            'file': 'sy_glass_EK.blend',
+            'types': []
+        },
+        'sy_glass_JL': {
+            'name': 'sy_glass_JL',
+            'file': 'sy_glass_JL.blend',
+            'types': []
+        },
+        'sy_lite_shiny': {
+            'name': 'sy_lite_shiny',
+            'file': 'sy_lite_shiny.blend',
+            'types': []
+        },
+        'sy_white_matte': {
+            'name': 'sy_white_matte',
+            'file': 'sy_white_matte.blend',
+            'types': []
+        },
+        'kc-glass-clear': {
+            'name': 'kc-glass-clear',
+            'file': 'sy-cyc-glass-clear.blend',
+            'types': []
+        },
+        'sy-glass-frosted': {
+            'name': 'sy-glass-frosted',
+            'file': 'sy-glass-frosted.blend',
+            'types': []
+        },
+        'window': {
+            'name': 'window',
+            'file': 'window.blend',
+            'types': []
         },
         'wood_floor_deck': {
             'name': 'wood_floor_deck',
@@ -902,9 +952,9 @@ def create_room(asset_size, camera_position, materials, randomness=True):
     )
 
     # other walls
-    wall_material_name = add_and_rename_material(materials, 'piano_key')
-    window_material_name = add_and_rename_material(materials, 'piano_key')
-    glass_material_name = add_and_rename_material(materials, 'piano_key')
+    wall_material_name = add_and_rename_material(materials, 'sy_white_matte')
+    window_material_name = add_and_rename_material(materials, 'sy_lite_shiny')
+    glass_material_name = add_and_rename_material(materials, 'window')
 
     for dead_axis, dead_coord, left, right, flip in zip(
         ['x', 'x', 'y'],
