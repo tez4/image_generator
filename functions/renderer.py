@@ -351,7 +351,7 @@ def get_random_hdri(randomness=True):
         else:
             exr_file = exr_files[0]
 
-    return f"//assets/background/{exr_file}"
+    return f"//assets/background/{exr_file}", exr_file
 
 
 def assign_material_to_object(obj_name, material_name):
@@ -649,7 +649,7 @@ def add_camera(asset_size, randomness=True):
         logging.critical('Error! No camera named "Camera". Error happened in add_camera()')
 
     bpy.data.cameras['Camera'].lens_unit = 'FOV'
-    bpy.data.cameras['Camera'].angle = fov_angle * 2
+    bpy.data.cameras['Camera'].angle = fov_angle * 2 * 1.2
     # bpy.context.active_object.data.dof.use_dof = True
     # bpy.context.active_object.data.dof.focus_distance = 2
     # bpy.context.active_object.data.dof.aperture_fstop = 0.8
@@ -664,13 +664,18 @@ def add_camera(asset_size, randomness=True):
     return camera_position, camera_rotation, distance
 
 
-def add_point_light(name, location, radius, energy):
-    light_data = bpy.data.lights.new(name=name, type='POINT')
+def add_light(name, location, radius, energy, light_type='POINT'):
+    light_data = bpy.data.lights.new(name=name, type=light_type)
     light_object = bpy.data.objects.new(name, light_data)
     bpy.context.collection.objects.link(light_object)
     light_object.location = location
     bpy.data.lights[name].energy = energy
-    bpy.data.lights[name].shadow_soft_size = radius
+
+    if light_type == 'POINT':
+        bpy.data.lights[name].shadow_soft_size = radius
+    elif light_type == 'AREA':
+        bpy.data.lights[name].shape = 'DISK'
+        bpy.data.lights[name].size = radius
 
 
 def add_point_lights(asset_size):
@@ -683,9 +688,9 @@ def add_point_lights(asset_size):
     radius = distance_to_center / 6
     energy = distance_to_center * 30
 
-    add_point_light('back_left_light', (-x_light, y_light, z_light), radius, energy)
-    add_point_light('back_right_light', (x_light, y_light, z_light), radius, energy)
-    add_point_light('front_light', (0, -y_light, z_light), radius, energy / 2)
+    add_light('back_left_light', (-x_light, y_light, z_light), radius, energy, 'POINT')
+    add_light('back_right_light', (x_light, y_light, z_light), radius, energy, 'POINT')
+    add_light('front_light', (0, -y_light, z_light), radius, energy / 2, 'POINT')
 
 
 def take_picture(folder, image_name):
@@ -733,7 +738,7 @@ def create_window_wall(
 
     wall_width = right - left
     windows = max(math.floor(windows_random * wall_width), 1)
-    wall_border = (wall_width - windows) * wall_border_random
+    wall_border = max((wall_width - windows * 1.5) * wall_border_random, 0.2)
     window_space = (wall_width - wall_border) / windows
     window_width = min(window_space - 0.2, max(0.8, window_space * window_width_random))
     window_side_space = (window_space - window_width) / 2
@@ -754,9 +759,6 @@ border space: {round(border_space, 2)}')
         dead_axis, dead_coord, (right - border_space, 0 - overlap), (right + overlap, z_top + overlap),
         wall_material_name
     )
-
-    if windows <= 1:
-        return
 
     for i in range(0, windows):
         right_window_side = left + border_space + window_width + i * (window_space)
@@ -871,7 +873,7 @@ border space: {round(border_space, 2)}')
             )
 
 
-def create_room(asset_size, camera_position, materials, randomness=True):
+def create_room(asset_size, camera_position, materials, hdri_name, randomness=True):
     x_left_random = random.random() if randomness else 0.5
     x_right_random = random.random() if randomness else 0.5
     y_behind_random = random.random() if randomness else 0.5
@@ -879,8 +881,8 @@ def create_room(asset_size, camera_position, materials, randomness=True):
     z_random = random.random() if randomness else 0.5
 
     z_top = max(asset_size[2] + 0.2, 2) + (z_random * 1.2)
-    x_left = -((asset_size[0] / 2) + 0.2 + (x_left_random * 2.8))
-    x_right = ((asset_size[0] / 2) + 0.2 + (x_right_random * 2.8))
+    x_left = (min(-asset_size[0] / 2, camera_position[0]) - 0.2 - (x_left_random * 2.8))
+    x_right = (max(asset_size[0] / 2, camera_position[1]) + 0.2 + (x_right_random * 2.8))
     y_behind = (asset_size[1] / 2) + 0.05 + (y_behind_random * 0.45)
     y_front = camera_position[1] - 0.2 - (y_front_random * 2.8)
 
@@ -935,6 +937,25 @@ def create_room(asset_size, camera_position, materials, randomness=True):
         ceiling_material
     )
 
+    # light
+    needs_light = [
+        'dikhololo_night_4k.exr',
+        'hansaplatz_4k.exr',
+        'moonless_golf_4k.exr',
+        'sandsloot_4k.exr',
+        'satara_night_no_lamps_4k.exr',
+    ]
+
+    if hdri_name in needs_light:
+        x_light = (x_left + x_right) / 2
+        y_light = (y_front + y_behind) / 2
+        light_radius_random = random.random() if randomness else 0.5
+        light_energy_random = random.random() if randomness else 0.5
+        light_radius = 0.2 + 0.8 * light_radius_random
+        light_energy = 10 + 40 * light_energy_random
+
+        add_light('room_light', (x_light, y_light, z_top - 0.1), light_radius, light_energy, 'AREA')
+
     # product wall
     if randomness:
         wall_materials = [material for material, value in materials.items() if 'wall' in value['types']]
@@ -976,13 +997,14 @@ def run_main():
     to_skip = define_skip_assets()
     materials = get_materials_info()
     assets = get_assets_info()
-    experiment_name = 'experiment_38'
+    experiment_name = 'experiment_43'
 
     #  "beds", "cabinets",  "chairs"
     # ["decor", "electronics", "lamps", "plants", "shelves", "sofas", "tables", "tablesets"]
     # assets = {a: v for a, v in assets.items() if v["category"] == category}
     # asset = assets[list(assets.keys())[i]]
-    for i in range(1):
+
+    for i in range(10):
         asset = get_random_asset(assets, nonrandom_asset="cabinet_38_02", randomness=False)
         logging.info(f"Got asset '{asset['name']}' of type '{asset['category']}'")
 
@@ -990,30 +1012,31 @@ def run_main():
             continue
 
         remove_old_objects()
-        add_asset(f"./assets/interior_models/{asset['file']}/Object/", asset['name'], 0, randomness=False)
+        add_asset(f"./assets/interior_models/{asset['file']}/Object/", asset['name'], 0, randomness=True)
         asset_size = get_asset_size(asset['name'])
         if asset_size[2] > 2.6:
             continue
 
-        camera_position, camera_rotation, distance = add_camera(asset_size, randomness=False)
+        camera_position, camera_rotation, distance = add_camera(asset_size, randomness=True)
         bpy.data.objects[asset['name']].rotation_euler[2] += radians(-camera_rotation)
+        asset_size = get_asset_size(asset['name'])
         logging.debug(f'cam at: {camera_position} with distance {distance}')
 
-        # add_asset("./assets/custom_planes/plane_03.blend/Object/", 'Plane_03', rotation_degrees=0, randomness=False)
+        add_asset("./assets/custom_planes/plane_03.blend/Object/", 'Plane_03', rotation_degrees=0, randomness=False)
 
-        # add_world_background("//assets/background/abandoned_slipway_4k.exr", 0.3, 270, randomness=False)
-        # add_point_lights(asset_size)
+        add_world_background("//assets/background/abandoned_slipway_4k.exr", 0.3, 270, randomness=False)
+        add_point_lights(asset_size)
 
-        # take_picture(experiment_name, f'{i}__2')
+        take_picture(experiment_name, f'{i}__2')
 
-        # for object in ["Plane_03", "back_left_light", "back_right_light", "front_light"]:
-        #     bpy.data.objects[object].hide_render = True
-        #     bpy.data.objects[object].hide_viewport = True
+        for object in ["Plane_03", "back_left_light", "back_right_light", "front_light"]:
+            bpy.data.objects[object].hide_render = True
+            bpy.data.objects[object].hide_viewport = True
 
-        create_room(asset_size, camera_position, materials, randomness=False)
+        hdri, hdri_name = get_random_hdri(randomness=True)
+        add_world_background(hdri, 1.0, 90, randomness=True)
 
-        hdri = get_random_hdri(randomness=True)
-        add_world_background(hdri, 5.0, 90, randomness=True)
+        create_room(asset_size, camera_position, materials, hdri_name, randomness=True)
 
         take_picture(experiment_name, f'{i}__1')
 
