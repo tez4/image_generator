@@ -162,6 +162,15 @@ def append_material_from_library(blend_path, material_name):
     bpy.ops.wm.append(filename=material_name, directory=material_path)
 
 
+def add_and_rename_material(materials, material_name='piano_key'):
+    material = materials[material_name]
+    new_material_name = f'{material["name"]}_{uuid.uuid4().int}'
+    append_material_from_library(material['file'], material['name'])
+    bpy.data.materials[material['name']].name = new_material_name
+
+    return new_material_name
+
+
 def get_materials_info():
     materials = {
         'brick_wall_02': {
@@ -660,13 +669,17 @@ def define_skip_assets():
     return to_skip
 
 
-def create_window_wall(dead_axis, dead_coord, left, right, z_top, flip, material_name, overlap, randomness):
+def create_window_wall(
+        dead_axis, dead_coord, left, right, z_top, flip, wall_material_name, window_material_name, glass_material_name,
+        overlap, randomness):
+
     windows_random = random.random() if randomness else 0.5
     wall_border_random = random.random() if randomness else 0.5
     window_width_random = random.random() if randomness else 0.5
     is_window_random = random.randint(0, 1) if randomness else 1
     below_window_random = random.random() if randomness else 0.5
     above_window_random = random.random() if randomness else 0.5
+    window_border_random = random.random() if randomness else 0.5
 
     wall_width = right - left
     windows = max(math.floor(windows_random * wall_width), 1)
@@ -677,15 +690,19 @@ def create_window_wall(dead_axis, dead_coord, left, right, z_top, flip, material
     border_space = window_side_space + wall_border / 2
     below_window = 0.8 + below_window_random * 0.4 if is_window_random else 0.05
     above_window = 0.1 + above_window_random * 0.4
+    window_border = 0.03 + 0.05 * window_border_random
 
     logging.info(f'wall: {dead_axis} {round(dead_coord, 2)} / width: {round(wall_width, 2)}, windows: {windows} \
 border space: {round(border_space, 2)}')
 
+    # border before first and after last window
     create_plane(
-        dead_axis, dead_coord, (left - overlap, 0 - overlap), (left + border_space, z_top + overlap), material_name
+        dead_axis, dead_coord, (left - overlap, 0 - overlap), (left + border_space, z_top + overlap),
+        wall_material_name
     )
     create_plane(
-        dead_axis, dead_coord, (right - border_space, 0 - overlap), (right + overlap, z_top + overlap), material_name
+        dead_axis, dead_coord, (right - border_space, 0 - overlap), (right + overlap, z_top + overlap),
+        wall_material_name
     )
 
     if windows <= 1:
@@ -693,21 +710,24 @@ border space: {round(border_space, 2)}')
 
     for i in range(0, windows):
         right_window_side = left + border_space + window_width + i * (window_space)
+        left_window_side = right_window_side - window_width
 
+        # below window
         create_plane(
             dead_axis,
             dead_coord,
-            (right_window_side - window_width, 0 - overlap),
+            (left_window_side, 0 - overlap),
             (right_window_side, below_window),
-            material_name
+            wall_material_name
         )
 
+        # above window
         create_plane(
             dead_axis,
             dead_coord,
-            (right_window_side - window_width, z_top - above_window),
+            (left_window_side, z_top - above_window),
             (right_window_side, z_top + overlap),
-            material_name
+            wall_material_name
         )
 
         if dead_axis == 'x':
@@ -720,40 +740,66 @@ border space: {round(border_space, 2)}')
         else:
             outside_wall = dead_coord - 0.2
 
-        for coord in [right_window_side - window_width, right_window_side]:
+        wall_middle = (outside_wall + dead_coord) / 2
+
+        # window vertical
+        for coord, inside_coord in zip(
+            [left_window_side, right_window_side],
+            [left_window_side + window_border, right_window_side - window_border]
+        ):
+
             create_plane(
                 dead_border_axis,
                 coord,
                 (dead_coord, below_window),
                 (outside_wall, z_top - above_window),
-                material_name
+                wall_material_name
             )
 
+            create_plane(
+                dead_border_axis,
+                inside_coord,
+                (wall_middle - 0.02, below_window),
+                (wall_middle + 0.02, z_top - above_window),
+                window_material_name
+            )
+
+            for window_side in [wall_middle - 0.02, wall_middle + 0.02]:
+                create_plane(
+                    dead_axis,
+                    window_side,
+                    (coord, below_window),
+                    (inside_coord, z_top - above_window),
+                    window_material_name
+                )
+
+        # window horizontal
         for coord in [below_window, z_top - above_window]:
             if dead_axis == 'x':
                 create_plane(
                     'z',
                     coord,
-                    (dead_coord, right_window_side - window_width),
+                    (dead_coord, left_window_side),
                     (outside_wall, right_window_side),
-                    material_name
+                    wall_material_name
                 )
             else:
                 create_plane(
                     'z',
                     coord,
-                    (right_window_side - window_width, dead_coord),
+                    (left_window_side, dead_coord),
                     (right_window_side, outside_wall),
-                    material_name
+                    wall_material_name
                 )
 
+        # between windows
         if i < windows - 1:
             create_plane(
                 dead_axis,
                 dead_coord,
                 (right_window_side, 0 - overlap),
                 (right_window_side + (window_side_space * 2), z_top + overlap),
-                material_name
+                wall_material_name
             )
 
 
@@ -838,20 +884,21 @@ def create_room(asset_size, camera_position, materials, randomness=True):
     )
 
     # other walls
-    material = materials['piano_key']
-    material_name = f'{material["name"]}_{uuid.uuid4().int}'
-    append_material_from_library(material['file'], material['name'])
-    bpy.data.materials[material['name']].name = material_name
+    wall_material_name = add_and_rename_material(materials, 'piano_key')
+    window_material_name = add_and_rename_material(materials, 'piano_key')
+    glass_material_name = add_and_rename_material(materials, 'piano_key')
 
-    for dead_axis, dead_coord, left, right, flip, material_name in zip(
+    for dead_axis, dead_coord, left, right, flip in zip(
         ['x', 'x', 'y'],
         [x_left, x_right, y_front],
         [y_front, y_front, x_left],
         [y_behind, y_behind, x_right],
         [False, True, False],
-        [material_name, material_name, material_name]
     ):
-        create_window_wall(dead_axis, dead_coord, left, right, z_top, flip, material_name, overlap, randomness)
+        create_window_wall(
+            dead_axis, dead_coord, left, right, z_top, flip, wall_material_name, window_material_name,
+            glass_material_name, overlap, randomness
+        )
 
 
 def run_main():
