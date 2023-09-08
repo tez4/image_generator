@@ -742,6 +742,15 @@ border space: {round(border_space, 2)}')
 
         wall_middle = (outside_wall + dead_coord) / 2
 
+        # window glass
+        create_plane(
+            dead_axis,
+            wall_middle,
+            (left_window_side, below_window),
+            (right_window_side, z_top - above_window),
+            glass_material_name
+        )
+
         # window vertical
         for coord, inside_coord in zip(
             [left_window_side, right_window_side],
@@ -774,22 +783,31 @@ border space: {round(border_space, 2)}')
                 )
 
         # window horizontal
-        for coord in [below_window, z_top - above_window]:
-            if dead_axis == 'x':
+        for coord, inside_coord in zip(
+            [below_window, z_top - above_window],
+            [below_window + window_border, z_top - above_window - window_border]
+        ):
+            c1 = (dead_coord, left_window_side)
+            c2 = (outside_wall, right_window_side)
+            if dead_axis == 'y':
+                c1 = (c1[1], c1[0])
+                c2 = (c2[1], c2[0])
+            create_plane('z', coord, c1, c2, wall_material_name)
+
+            c1 = (wall_middle - 0.02, left_window_side)
+            c2 = (wall_middle + 0.02, right_window_side)
+            if dead_axis == 'y':
+                c1 = (c1[1], c1[0])
+                c2 = (c2[1], c2[0])
+            create_plane('z', inside_coord, c1, c2, window_material_name)
+
+            for window_side in [wall_middle - 0.02, wall_middle + 0.02]:
                 create_plane(
-                    'z',
-                    coord,
-                    (dead_coord, left_window_side),
-                    (outside_wall, right_window_side),
-                    wall_material_name
-                )
-            else:
-                create_plane(
-                    'z',
-                    coord,
-                    (left_window_side, dead_coord),
-                    (right_window_side, outside_wall),
-                    wall_material_name
+                    dead_axis,
+                    window_side,
+                    (left_window_side + window_border, coord),
+                    (right_window_side - window_border, inside_coord),
+                    window_material_name
                 )
 
         # between windows
