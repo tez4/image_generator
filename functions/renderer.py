@@ -39,7 +39,7 @@ class SimpleLogger:
             print(f"[{level_name}] {msg}")
 
 
-logging = SimpleLogger(level=SimpleLogger.INFO)
+logging = SimpleLogger(level=SimpleLogger.DEBUG)
 
 
 def remove_old_objects():
@@ -101,6 +101,8 @@ def remove_old_objects():
                 bpy.data.images.remove(image)
             k += 1
 
+    logging.debug('ran "remove_old_objects"')
+
 
 def get_assets_info():
     assets = {}
@@ -127,6 +129,8 @@ def get_assets_info():
                 assets[value]["category"] = category
                 assets[value]["file"] = f"{blend_file}.blend"
 
+    logging.debug('ran "get_assets_info"')
+
     return assets
 
 
@@ -139,6 +143,8 @@ def get_random_asset(assets, nonrandom_asset="plant_49", randomness=True):
             asset = assets[nonrandom_asset]
         else:
             asset = assets[list(assets.keys())[0]]
+
+    logging.debug('ran "get_random_asset"')
 
     return asset
 
@@ -153,20 +159,52 @@ def add_asset(
     obj.location = (0, 0, 0)
     obj.rotation_euler = (0, 0, radians(rotation_degrees))
 
+    logging.debug('ran "add_asset"')
+
 
 def append_material_from_library(blend_path, material_name):
+    logging.debug('started "append_material_from_library" function.')
     # Define the path to the material inside the .blend file
-    material_path = f"./assets/materials/{blend_path}/{blend_path}/Material/"
+    # material_path = f"./assets/materials/{blend_path}/{blend_path}/Material/"
+    # material_path_dir = f"./assets/materials/{blend_path}/{blend_path}/Material/"
+
+    logging.debug(f'blend_path: "{blend_path}"')
+    logging.debug(f'material_name: "{material_name}"')
+
+    base_assets_path = "//assets/materials/"
+    absolute_blend_path = os.path.join(base_assets_path, blend_path, blend_path)
+
+    if not os.path.exists(absolute_blend_path):
+        print(f"Blend file not found: {absolute_blend_path}")
+
+    if material_name in bpy.data.materials:
+        print(f"Material '{material_name}' already exists in the current file.")
+
+    # material_directory = os.path.join(base_assets_path, blend_path, blend_path, "Material")
 
     # Append the material
-    bpy.ops.wm.append(filename=material_name, directory=material_path)
+    with bpy.data.libraries.load(absolute_blend_path) as (data_from, data_to):
+        if material_name in data_from.materials:
+            data_to.materials = [material_name]
+        else:
+            print(f"Material '{material_name}' not found in {absolute_blend_path}")
+
+    if material_name not in bpy.data.materials:
+        print(f"Failed to append material '{material_name}' from {absolute_blend_path}")
+
+    # bpy.ops.wm.append(filename=material_name, directory=material_path)
+
+    logging.debug('ran "append_material_from_library"')
 
 
 def add_and_rename_material(materials, material_name='piano_key'):
+    logging.debug('started "add_and_rename_material" function.')
     material = materials[material_name]
     new_material_name = f'{material["name"]}_{uuid.uuid4().int}'
     append_material_from_library(material['file'], material['name'])
     bpy.data.materials[material['name']].name = new_material_name
+
+    logging.debug(f'ran "add_and_rename_material" and added material {new_material_name}')
 
     return new_material_name
 
@@ -335,6 +373,8 @@ def get_materials_info():
         # },
     }
 
+    logging.debug('ran "get_materials_info"')
+
     return materials
 
 
@@ -351,6 +391,8 @@ def get_random_hdri(randomness=True):
         else:
             exr_file = exr_files[0]
 
+    logging.debug('ran "get_random_hdri"')
+
     return f"//assets/background/{exr_file}", exr_file
 
 
@@ -364,6 +406,8 @@ def assign_material_to_object(obj_name, material_name):
 
     # Assign the material to the object's first material slot
     obj.material_slots[0].material = mat
+
+    logging.debug('ran "assign_material_to_object"')
 
 
 def convert_coords(dead_axis='z', dead_coord=0, bottom_left=(0, 0), top_right=(1, 1)):
@@ -380,6 +424,8 @@ def convert_coords(dead_axis='z', dead_coord=0, bottom_left=(0, 0), top_right=(1
             coordinate = (dead_coord, coordinate[0], coordinate[1])
 
         coords.append(coordinate)
+
+    logging.debug('ran "convert_coords"')
 
     return coords
 
@@ -407,6 +453,8 @@ def create_plane(dead_axis, dead_coord, bottom_left, top_right, material_name):
     mesh.update()
 
     assign_material_to_object(obj_name, material_name)
+
+    logging.debug('ran "create_plane"')
 
 
 def create_texture_plane(dead_axis, dead_coord, bottom_left, top_right, flip, material, has_texture=True):
@@ -469,6 +517,8 @@ def create_texture_plane(dead_axis, dead_coord, bottom_left, top_right, flip, ma
         if flip:
             nodes['Displacement'].inputs[2].default_value = -nodes['Displacement'].inputs[2].default_value
 
+    logging.debug('ran "create_texture_plane"')
+
 
 def add_world_background(exr_file_path, strength=1.0, rotation_degrees=0.0, randomness=False):
     rotation_degrees = random.random() * 360 if randomness else rotation_degrees
@@ -520,6 +570,8 @@ def add_world_background(exr_file_path, strength=1.0, rotation_degrees=0.0, rand
     # add strength
     background_node.inputs[1].default_value = strength
 
+    logging.debug('ran "add_world_background"')
+
 
 def get_asset_size(obj_name):
 
@@ -536,6 +588,8 @@ def get_asset_size(obj_name):
     min_x, max_x = min(x_values), max(x_values)
     min_y, max_y = min(y_values), max(y_values)
     min_z, max_z = min(z_values), max(z_values)
+
+    logging.debug('ran "get_asset_size"')
 
     return (max_x - min_x, max_y - min_y, max_z - min_z)
 
@@ -587,6 +641,8 @@ def customize_render_quality(show_background=False, high_quality=True, image_siz
         bpy.context.scene.eevee.use_volumetric_lights = True
         bpy.context.scene.eevee.volumetric_samples = 64
 
+    logging.debug('ran "customize_render_quality"')
+
 
 def angle_of_vectors(a, b):
     a_x, a_y = a
@@ -595,7 +651,12 @@ def angle_of_vectors(a, b):
     mod = sqrt(a_x * a_x + a_y * a_y) * sqrt(b_x * b_x + b_y * b_y)
     if mod == 0:
         logging.critical('Error! Angle of vectors is zero!')
-    return acos(min(1, max(-1, dot_product / mod)))
+
+    result = acos(min(1, max(-1, dot_product / mod)))
+
+    logging.debug('ran "angle_of_vectors"')
+
+    return result
 
 
 def rotate_object_around_point(object_name, point=(0, 0, 0), rotation=45, axis='Z'):
@@ -616,6 +677,8 @@ def rotate_object_around_point(object_name, point=(0, 0, 0), rotation=45, axis='
 
     else:
         logging.warning(f"Object named {object_name} does not exist in the current scene.")
+
+    logging.debug('ran "rotate_object_around_point"')
 
 
 def add_camera(asset_size, randomness=True):
@@ -661,6 +724,8 @@ def add_camera(asset_size, randomness=True):
     camera_position = tuple(cam_object.location)
     logging.info(f'cam position and angle: {camera_position} {angle}')
 
+    logging.debug('ran "add_camera"')
+
     return camera_position, camera_rotation, distance
 
 
@@ -677,6 +742,8 @@ def add_light(name, location, radius, energy, light_type='POINT'):
         bpy.data.lights[name].shape = 'DISK'
         bpy.data.lights[name].size = radius
 
+    logging.debug('ran "add_light"')
+
 
 def add_point_lights(asset_size):
     x, y, z = asset_size
@@ -692,6 +759,8 @@ def add_point_lights(asset_size):
     add_light('back_right_light', (x_light, y_light, z_light), radius, energy, 'POINT')
     add_light('front_light', (0, -y_light, z_light), radius, energy / 2, 'POINT')
 
+    logging.debug('ran "add_point_lights"')
+
 
 def take_picture(folder, image_name):
     folder_path = f'./output/{folder}'
@@ -701,6 +770,8 @@ def take_picture(folder, image_name):
     bpy.context.scene.render.filepath = f'//output/{folder}/{image_name}.png'
     bpy.ops.render.render(write_still=True)
     # bpy.data.images.remove(bpy.data.images['Render Result'])
+
+    logging.debug('ran "take_picture"')
 
 
 def define_skip_assets():
@@ -720,6 +791,8 @@ def define_skip_assets():
         'shelf_20_02', 'shelf_20_01', 'shelf_18_02', 'shelf_18_01', 'shelf_16_02', 'shelf_16_01', 'shelf_04',
         'tableset_05'
     ]
+
+    logging.debug('ran "define_skip_assets"')
 
     return to_skip
 
@@ -872,6 +945,8 @@ border space: {round(border_space, 2)}')
                 wall_material_name
             )
 
+    logging.debug('ran "create_window_wall"')
+
 
 def create_room(asset_size, camera_position, materials, hdri_name, randomness=True):
     x_left_random = random.random() if randomness else 0.5
@@ -881,8 +956,8 @@ def create_room(asset_size, camera_position, materials, hdri_name, randomness=Tr
     z_random = random.random() if randomness else 0.5
 
     z_top = max(asset_size[2] + 0.2, 2) + (z_random * 1.2)
-    x_left = (min(-asset_size[0] / 2, camera_position[0]) - 0.2 - (x_left_random * 2.8))
-    x_right = (max(asset_size[0] / 2, camera_position[1]) + 0.2 + (x_right_random * 2.8))
+    x_left = (min(-asset_size[0] / 2, camera_position[0]) - 0.4 - (x_left_random * 2))
+    x_right = (max(asset_size[0] / 2, camera_position[1]) + 0.4 + (x_right_random * 2))
     y_behind = (asset_size[1] / 2) + 0.05 + (y_behind_random * 0.45)
     y_front = camera_position[1] - 0.2 - (y_front_random * 2.8)
 
@@ -984,10 +1059,13 @@ def create_room(asset_size, camera_position, materials, hdri_name, randomness=Tr
         [y_behind, y_behind, x_right],
         [False, True, False],
     ):
+        logging.debug('Just before creating a window wall')
         create_window_wall(
             dead_axis, dead_coord, left, right, z_top, flip, wall_material_name, window_material_name,
             glass_material_name, overlap, randomness
         )
+
+    logging.debug('ran "create_room"')
 
 
 def run_main():
@@ -997,15 +1075,15 @@ def run_main():
     to_skip = define_skip_assets()
     materials = get_materials_info()
     assets = get_assets_info()
-    experiment_name = 'experiment_43'
+    experiment_name = 'experiment_45'
 
     #  "beds", "cabinets",  "chairs"
     # ["decor", "electronics", "lamps", "plants", "shelves", "sofas", "tables", "tablesets"]
     # assets = {a: v for a, v in assets.items() if v["category"] == category}
     # asset = assets[list(assets.keys())[i]]
 
-    for i in range(10):
-        asset = get_random_asset(assets, nonrandom_asset="cabinet_38_02", randomness=False)
+    for i in range(1000):
+        asset = get_random_asset(assets, nonrandom_asset="cabinet_38_02", randomness=True)
         logging.info(f"Got asset '{asset['name']}' of type '{asset['category']}'")
 
         if asset["name"] in to_skip:
@@ -1015,6 +1093,7 @@ def run_main():
         add_asset(f"./assets/interior_models/{asset['file']}/Object/", asset['name'], 0, randomness=True)
         asset_size = get_asset_size(asset['name'])
         if asset_size[2] > 2.6:
+            logging.debug('ran "asset skipped because too big"')
             continue
 
         camera_position, camera_rotation, distance = add_camera(asset_size, randomness=True)
