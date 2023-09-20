@@ -197,9 +197,6 @@ def append_material_from_library(blend_path, material_name):
     base_assets_path = "//assets/materials/"
     absolute_blend_path = os.path.join(base_assets_path, blend_path, blend_path)
 
-    if not os.path.exists(absolute_blend_path):
-        print(f"Blend file not found: {absolute_blend_path}")
-
     if material_name in bpy.data.materials:
         print(f"Material '{material_name}' already exists in the current file.")
 
@@ -218,6 +215,25 @@ def append_material_from_library(blend_path, material_name):
     # bpy.ops.wm.append(filename=material_name, directory=material_path)
 
     logging.debug('ran "append_material_from_library"')
+
+
+def append_node_group_from_library(blend_path, node_group_name):
+    base_assets_path = "//assets/materials/"
+    absolute_blend_path = os.path.join(base_assets_path, blend_path, blend_path)
+
+    if node_group_name in bpy.data.node_groups:
+        print(f"Node group '{node_group_name}' already exists in the current file.")
+
+    with bpy.data.libraries.load(absolute_blend_path) as (data_from, data_to):
+        if node_group_name in data_from.node_groups:
+            data_to.node_groups = [node_group_name]
+        else:
+            print(f"Node group '{node_group_name}' not found in {absolute_blend_path}")
+
+    if node_group_name not in bpy.data.node_groups:
+        print(f"Failed to append node group '{node_group_name}' from {absolute_blend_path}")
+
+    logging.debug('ran "append_node_group_from_library"')
 
 
 def add_and_rename_material(materials, material_name='piano_key'):
@@ -387,6 +403,11 @@ def get_materials_info():
         'sy-glass-frosted': {
             'name': 'sy-glass-frosted',
             'file': 'sy-glass-frosted.blend',
+            'types': []
+        },
+        'white': {
+            'name': 'white',
+            'file': 'white.blend',
             'types': []
         },
         'window': {
@@ -1145,7 +1166,7 @@ def run_main():
     to_skip = define_skip_assets()
     materials = get_materials_info()
     assets = get_assets_info()
-    experiment_name = 'experiment_47'
+    experiment_name = 'experiment_48'
 
     #  "beds", "cabinets",  "chairs"
     # ["decor", "electronics", "lamps", "plants", "shelves", "sofas", "tables", "tablesets"]
@@ -1191,9 +1212,11 @@ def run_main():
         create_room(asset_size, camera_position, materials, hdri_name, randomness=True)
         take_picture(experiment_name, f'{i}__1')
 
+        append_node_group_from_library("normal.blend", "get_normal")
         add_node_group_to_all_materials("get_normal")
         take_picture(experiment_name, f'{i}__2')
 
+        append_node_group_from_library("distance.blend", "get_distance")
         add_node_group_to_all_materials("get_distance")
         take_picture(experiment_name, f'{i}__3')
 

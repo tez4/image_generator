@@ -43,8 +43,8 @@ def create_image_grid(path, grid_size=(2, 2), cell_size=(200, 200), margin=5, ou
 
 # Example usage:
 grid_image = create_image_grid(
-    "./output/experiment_19/",
-    grid_size=(2, 6),
+    "./output/experiment_47/",
+    grid_size=(4, 5),
     randomness=False
 )
 grid_image.show()
