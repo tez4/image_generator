@@ -150,12 +150,35 @@ def get_random_asset(assets, nonrandom_asset="plant_49", randomness=True):
 
 
 def add_asset(
-        filepath="./assets/interior_models/1000_plants_bundle.blend/Object/", name='plant_24', rotation_degrees=0.0,
+        filepath="//assets/interior_models/1000_plants_bundle.blend", object_name='plant_24', rotation_degrees=0.0,
         randomness=False):
 
     rotation_degrees = random.random() * 360 if randomness else rotation_degrees
-    bpy.ops.wm.append(directory=filepath, filename=name)
-    obj = bpy.data.objects[name]
+
+    collection_name = "Collection"
+
+    if collection_name in bpy.data.collections:
+        collection = bpy.data.collections[collection_name]
+    else:
+        logging.CRITICAL('Collection not found!')
+
+    if object_name in bpy.data.objects:
+        print(f"Object '{object_name}' already exists in the current file.")
+
+    with bpy.data.libraries.load(filepath) as (data_from, data_to):
+        if object_name in data_from.objects:
+            data_to.objects = [object_name]
+        else:
+            print(f"Object '{object_name}' not found in {filepath}")
+
+    if object_name not in bpy.data.objects:
+        print(f"Failed to append material '{object_name}' from {filepath}")
+
+    obj = bpy.data.objects[object_name]
+
+    if obj.name not in collection.objects:
+        collection.objects.link(obj)
+
     obj.location = (0, 0, 0)
     obj.rotation_euler = (0, 0, radians(rotation_degrees))
 
@@ -1075,14 +1098,14 @@ def run_main():
     to_skip = define_skip_assets()
     materials = get_materials_info()
     assets = get_assets_info()
-    experiment_name = 'experiment_45'
+    experiment_name = 'experiment_46'
 
     #  "beds", "cabinets",  "chairs"
     # ["decor", "electronics", "lamps", "plants", "shelves", "sofas", "tables", "tablesets"]
     # assets = {a: v for a, v in assets.items() if v["category"] == category}
     # asset = assets[list(assets.keys())[i]]
 
-    for i in range(1000):
+    for i in range(1):
         asset = get_random_asset(assets, nonrandom_asset="cabinet_38_02", randomness=True)
         logging.info(f"Got asset '{asset['name']}' of type '{asset['category']}'")
 
@@ -1090,7 +1113,7 @@ def run_main():
             continue
 
         remove_old_objects()
-        add_asset(f"./assets/interior_models/{asset['file']}/Object/", asset['name'], 0, randomness=True)
+        add_asset(f"//assets/interior_models/{asset['file']}", asset['name'], 0, randomness=True)
         asset_size = get_asset_size(asset['name'])
         if asset_size[2] > 2.6:
             logging.debug('ran "asset skipped because too big"')
@@ -1101,10 +1124,13 @@ def run_main():
         asset_size = get_asset_size(asset['name'])
         logging.debug(f'cam at: {camera_position} with distance {distance}')
 
-        add_asset("./assets/custom_planes/plane_03.blend/Object/", 'Plane_03', rotation_degrees=0, randomness=False)
+        add_asset("//assets/custom_planes/plane_03.blend", 'Plane_03', rotation_degrees=0, randomness=False)
+        logging.debug('added plane asset')
 
         add_world_background("//assets/background/abandoned_slipway_4k.exr", 0.3, 270, randomness=False)
+        logging.debug('added world background')
         add_point_lights(asset_size)
+        logging.debug('added point lights')
 
         take_picture(experiment_name, f'{i}__2')
 
