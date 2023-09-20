@@ -274,6 +274,11 @@ def get_materials_info():
             'file': 'cw-glass-universe.blend',
             'types': []
         },
+        'distance': {
+            'name': 'distance',
+            'file': 'distance.blend',
+            'types': []
+        },
         'garage_floor': {
             'name': 'garage_floor',
             'file': 'garage_floor_4k.blend',
@@ -298,6 +303,11 @@ def get_materials_info():
             'name': 'mossy_cobblestone',
             'file': 'mossy_cobblestone_4k.blend',
             'types': ['floor']
+        },
+        'normal.blend': {
+            'name': 'normal',
+            'file': 'normal.blend',
+            'types': []
         },
         'patterned_brick_floor': {
             'name': 'patterned_brick_floor',
@@ -525,8 +535,8 @@ def create_texture_plane(dead_axis, dead_coord, bottom_left, top_right, flip, ma
     # subdivision modifier
     mod_subsurf = obj.modifiers.new("Subdivision Modifier", "SUBSURF")
     mod_subsurf.subdivision_type = 'SIMPLE'
-    mod_subsurf.levels = 6
-    mod_subsurf.render_levels = 6
+    mod_subsurf.levels = 7
+    mod_subsurf.render_levels = 10
 
     # add material from library
     append_material_from_library(material['file'], material['name'])
@@ -1091,6 +1101,43 @@ def create_room(asset_size, camera_position, materials, hdri_name, randomness=Tr
     logging.debug('ran "create_room"')
 
 
+def connect_nodes(node_tree, from_node, from_socket_name, to_node, to_socket_name):
+    for socket in from_node.outputs:
+        if socket.name == from_socket_name:
+            for to_socket in to_node.inputs:
+                if to_socket.name == to_socket_name:
+                    link = node_tree.links.new
+                    link(socket, to_socket)
+                    return
+
+
+def add_node_group_to_all_materials(node_group_name):
+    node_group = bpy.data.node_groups.get(node_group_name)
+
+    if node_group is None:
+        print("Node group not found!")
+    else:
+        for material in bpy.data.materials:
+            if material.use_nodes:
+                node_tree = material.node_tree
+                nodes = node_tree.nodes
+
+                output_node = None
+                for node in nodes:
+                    if node.type == 'OUTPUT_MATERIAL':
+                        output_node = node
+                        break
+
+                if not output_node:
+                    continue
+
+                group_node = nodes.new(type='ShaderNodeGroup')
+                group_node.node_tree = node_group
+                group_node.location = (output_node.location.x - 300, output_node.location.y)
+
+                connect_nodes(node_tree, group_node, "Emission", output_node, "Surface")
+
+
 def run_main():
     logging.info("Started Program")
 
@@ -1098,7 +1145,7 @@ def run_main():
     to_skip = define_skip_assets()
     materials = get_materials_info()
     assets = get_assets_info()
-    experiment_name = 'experiment_46'
+    experiment_name = 'experiment_47'
 
     #  "beds", "cabinets",  "chairs"
     # ["decor", "electronics", "lamps", "plants", "shelves", "sofas", "tables", "tablesets"]
@@ -1132,7 +1179,7 @@ def run_main():
         add_point_lights(asset_size)
         logging.debug('added point lights')
 
-        take_picture(experiment_name, f'{i}__2')
+        take_picture(experiment_name, f'{i}__4')
 
         for object in ["Plane_03", "back_left_light", "back_right_light", "front_light"]:
             bpy.data.objects[object].hide_render = True
@@ -1142,8 +1189,13 @@ def run_main():
         add_world_background(hdri, 1.0, 90, randomness=True)
 
         create_room(asset_size, camera_position, materials, hdri_name, randomness=True)
-
         take_picture(experiment_name, f'{i}__1')
+
+        add_node_group_to_all_materials("get_normal")
+        take_picture(experiment_name, f'{i}__2')
+
+        add_node_group_to_all_materials("get_distance")
+        take_picture(experiment_name, f'{i}__3')
 
     logging.info('Done!')
 
