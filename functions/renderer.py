@@ -1132,6 +1132,38 @@ def connect_nodes(node_tree, from_node, from_socket_name, to_node, to_socket_nam
                     return
 
 
+def select_node_by_type(node_tree, node_type):
+    selected_node = None
+    for node in node_tree.nodes:
+        if node.type == node_type:
+            selected_node = node
+            break
+
+    return selected_node
+
+
+def add_node_group_to_material(material, node_group):
+    node_tree = material.node_tree
+
+    output_node = select_node_by_type(node_tree, 'OUTPUT_MATERIAL')  # 'BSDF_PRINCIPLED
+
+    if not output_node:
+        return
+
+    for link in node_tree.links:
+        if link.to_socket.name == "Surface" and link.to_node.type == 'OUTPUT_MATERIAL':
+            previous_node_type = link.from_node.type
+            previous_socket_name = link.from_socket.name
+
+    group_node = node_tree.nodes.new(type='ShaderNodeGroup')
+    group_node.node_tree = node_group
+    group_node.location = (output_node.location.x - 300, output_node.location.y)
+
+    connect_nodes(node_tree, group_node, "Emission", output_node, "Surface")  # 'BSDF'
+
+    return material, previous_node_type, previous_socket_name
+
+
 def add_node_group_to_all_materials(node_group_name):
     node_group = bpy.data.node_groups.get(node_group_name)
 
@@ -1140,23 +1172,7 @@ def add_node_group_to_all_materials(node_group_name):
     else:
         for material in bpy.data.materials:
             if material.use_nodes:
-                node_tree = material.node_tree
-                nodes = node_tree.nodes
-
-                output_node = None
-                for node in nodes:
-                    if node.type == 'OUTPUT_MATERIAL':
-                        output_node = node
-                        break
-
-                if not output_node:
-                    continue
-
-                group_node = nodes.new(type='ShaderNodeGroup')
-                group_node.node_tree = node_group
-                group_node.location = (output_node.location.x - 300, output_node.location.y)
-
-                connect_nodes(node_tree, group_node, "Emission", output_node, "Surface")
+                add_node_group_to_material(material, node_group)
 
 
 def run_main():
@@ -1166,7 +1182,7 @@ def run_main():
     to_skip = define_skip_assets()
     materials = get_materials_info()
     assets = get_assets_info()
-    experiment_name = 'experiment_48'
+    experiment_name = 'experiment_49'
 
     #  "beds", "cabinets",  "chairs"
     # ["decor", "electronics", "lamps", "plants", "shelves", "sofas", "tables", "tablesets"]
