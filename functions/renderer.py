@@ -335,6 +335,11 @@ def get_materials_info():
             'file': 'piano_key.blend',
             'types': []
         },
+        'pitch_black': {
+            'name': 'pitch_black',
+            'file': 'pitch_black.blend',
+            'types': []
+        },
         'plastered_stone_wall': {
             'name': 'plastered_stone_wall',
             'file': 'plastered_stone_wall_4k.blend',
@@ -1142,7 +1147,7 @@ def select_node_by_type(node_tree, node_type):
     return selected_node
 
 
-def add_node_group_to_material(material, node_group_name):
+def add_node_group_to_material(material, node_group_name, output_socket_name):
     node_group = bpy.data.node_groups.get(node_group_name)
 
     if node_group is None:
@@ -1150,7 +1155,7 @@ def add_node_group_to_material(material, node_group_name):
 
     node_tree = material.node_tree
 
-    output_node = select_node_by_type(node_tree, 'OUTPUT_MATERIAL')  # 'BSDF_PRINCIPLED
+    output_node = select_node_by_type(node_tree, 'OUTPUT_MATERIAL')
 
     if not output_node:
         return
@@ -1164,16 +1169,16 @@ def add_node_group_to_material(material, node_group_name):
     group_node.node_tree = node_group
     group_node.location = (output_node.location.x - 300, output_node.location.y)
 
-    connect_nodes(node_tree, group_node, "Emission", output_node, "Surface")  # 'BSDF'
+    connect_nodes(node_tree, group_node, output_socket_name, output_node, "Surface")
 
     previous_node = select_node_by_type(node_tree, previous_node_type)
     return previous_node, previous_socket_name, output_node
 
 
-def add_node_group_to_all_materials(node_group_name):
+def add_node_group_to_all_materials(node_group_name, output_socket_name):
     for material in bpy.data.materials:
         if material.use_nodes:
-            add_node_group_to_material(material, node_group_name)
+            add_node_group_to_material(material, node_group_name, output_socket_name)
 
 
 def run_main():
@@ -1183,7 +1188,7 @@ def run_main():
     to_skip = define_skip_assets()
     materials = get_materials_info()
     assets = get_assets_info()
-    experiment_name = 'experiment_50'
+    experiment_name = 'experiment_51'
 
     #  "beds", "cabinets",  "chairs"
     # ["decor", "electronics", "lamps", "plants", "shelves", "sofas", "tables", "tablesets"]
@@ -1219,16 +1224,27 @@ def run_main():
 
         take_picture(experiment_name, f'{i}__4')
 
-        for object in ["Plane_03", "back_left_light", "back_right_light", "front_light"]:
+        for object in ["Plane_03"]:
             bpy.data.objects[object].hide_render = True
             bpy.data.objects[object].hide_viewport = True
 
+        append_node_group_from_library("pitch_black.blend", "get_pitch_black")
         asset_material = bpy.data.objects[asset['name']].active_material
-        previous_node, previous_socket_name, output_node = add_node_group_to_material(asset_material, "get_normal")
+        previous_node, previous_socket_name, output_node = add_node_group_to_material(
+            asset_material, "get_pitch_black", 'Value'
+        )
+
+        add_asset("//assets/custom_planes/plane_04.blend", 'Plane_04', rotation_degrees=0, randomness=False)
 
         take_picture(experiment_name, f'{i}__5')
 
         connect_nodes(asset_material.node_tree, previous_node, previous_socket_name, output_node, "Surface")
+
+        take_picture(experiment_name, f'{i}__6')
+
+        for object in ["Plane_04", "back_left_light", "back_right_light", "front_light"]:
+            bpy.data.objects[object].hide_render = True
+            bpy.data.objects[object].hide_viewport = True
 
         hdri, hdri_name = get_random_hdri(randomness=True)
         add_world_background(hdri, 1.0, 90, randomness=True)
@@ -1237,11 +1253,11 @@ def run_main():
         take_picture(experiment_name, f'{i}__1')
 
         append_node_group_from_library("normal.blend", "get_normal")
-        add_node_group_to_all_materials("get_normal")
+        add_node_group_to_all_materials("get_normal", 'Emission')
         take_picture(experiment_name, f'{i}__2')
 
         append_node_group_from_library("distance.blend", "get_distance")
-        add_node_group_to_all_materials("get_distance")
+        add_node_group_to_all_materials("get_distance", 'Emission')
         take_picture(experiment_name, f'{i}__3')
 
     logging.info('Done!')
