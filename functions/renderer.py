@@ -1142,7 +1142,12 @@ def select_node_by_type(node_tree, node_type):
     return selected_node
 
 
-def add_node_group_to_material(material, node_group):
+def add_node_group_to_material(material, node_group_name):
+    node_group = bpy.data.node_groups.get(node_group_name)
+
+    if node_group is None:
+        print("Node group not found!")
+
     node_tree = material.node_tree
 
     output_node = select_node_by_type(node_tree, 'OUTPUT_MATERIAL')  # 'BSDF_PRINCIPLED
@@ -1161,18 +1166,14 @@ def add_node_group_to_material(material, node_group):
 
     connect_nodes(node_tree, group_node, "Emission", output_node, "Surface")  # 'BSDF'
 
-    return material, previous_node_type, previous_socket_name
+    previous_node = select_node_by_type(node_tree, previous_node_type)
+    return previous_node, previous_socket_name, output_node
 
 
 def add_node_group_to_all_materials(node_group_name):
-    node_group = bpy.data.node_groups.get(node_group_name)
-
-    if node_group is None:
-        print("Node group not found!")
-    else:
-        for material in bpy.data.materials:
-            if material.use_nodes:
-                add_node_group_to_material(material, node_group)
+    for material in bpy.data.materials:
+        if material.use_nodes:
+            add_node_group_to_material(material, node_group_name)
 
 
 def run_main():
@@ -1182,7 +1183,7 @@ def run_main():
     to_skip = define_skip_assets()
     materials = get_materials_info()
     assets = get_assets_info()
-    experiment_name = 'experiment_49'
+    experiment_name = 'experiment_50'
 
     #  "beds", "cabinets",  "chairs"
     # ["decor", "electronics", "lamps", "plants", "shelves", "sofas", "tables", "tablesets"]
@@ -1221,6 +1222,13 @@ def run_main():
         for object in ["Plane_03", "back_left_light", "back_right_light", "front_light"]:
             bpy.data.objects[object].hide_render = True
             bpy.data.objects[object].hide_viewport = True
+
+        asset_material = bpy.data.objects[asset['name']].active_material
+        previous_node, previous_socket_name, output_node = add_node_group_to_material(asset_material, "get_normal")
+
+        take_picture(experiment_name, f'{i}__5')
+
+        connect_nodes(asset_material.node_tree, previous_node, previous_socket_name, output_node, "Surface")
 
         hdri, hdri_name = get_random_hdri(randomness=True)
         add_world_background(hdri, 1.0, 90, randomness=True)
