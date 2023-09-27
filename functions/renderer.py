@@ -2,6 +2,7 @@ import os
 import bpy
 import uuid
 import math
+import json
 import bmesh
 import random
 import mathutils
@@ -1181,6 +1182,25 @@ def add_node_group_to_all_materials(node_group_name, output_socket_name):
             add_node_group_to_material(material, node_group_name, output_socket_name)
 
 
+def save_metadata(folder, file_name, asset, camera_position, camera_rotation, distance, hdri_name):
+    folder_path = f'./output/{folder}'
+    if not os.path.exists(folder_path):
+        os.makedirs(folder_path)
+
+    file_path = f'./output/{folder}/{file_name}.json'
+    metadata = {
+        'asset': asset,
+        'camera_position': camera_position,
+        'camera_rotation': camera_rotation,
+        'distance': distance,
+        'hdri_name': hdri_name
+    }
+    with open(file_path, 'w') as outfile:
+        json.dump(metadata, outfile)
+
+    logging.debug('ran "save_metadata"')
+
+
 def run_main():
     logging.info("Started Program")
 
@@ -1188,7 +1208,7 @@ def run_main():
     to_skip = define_skip_assets()
     materials = get_materials_info()
     assets = get_assets_info()
-    experiment_name = 'experiment_51'
+    experiment_name = 'experiment_52'
 
     #  "beds", "cabinets",  "chairs"
     # ["decor", "electronics", "lamps", "plants", "shelves", "sofas", "tables", "tablesets"]
@@ -1259,6 +1279,8 @@ def run_main():
         append_node_group_from_library("distance.blend", "get_distance")
         add_node_group_to_all_materials("get_distance", 'Emission')
         take_picture(experiment_name, f'{i}__3')
+
+        save_metadata(experiment_name, f'{i}__0', asset, camera_position, camera_rotation, distance, hdri_name)
 
     logging.info('Done!')
 
