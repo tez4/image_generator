@@ -1201,6 +1201,18 @@ def save_metadata(folder, file_name, asset, camera_position, camera_rotation, di
     logging.debug('ran "save_metadata"')
 
 
+def set_to_diffuse_rendering():
+    bpy.data.scenes["Scene"].use_nodes = True
+    bpy.data.scenes["Scene"].view_layers["ViewLayer"].use_pass_diffuse_color = True
+    node_tree = bpy.data.scenes["Scene"].node_tree
+    connect_nodes(node_tree, node_tree.nodes["Render Layers"], "DiffCol", node_tree.nodes["Composite"], "Image")
+
+
+def reset_to_image_rendering():
+    node_tree = bpy.data.scenes["Scene"].node_tree
+    connect_nodes(node_tree, node_tree.nodes["Render Layers"], "Image", node_tree.nodes["Composite"], "Image")
+
+
 def run_main():
     logging.info("Started Program")
 
@@ -1208,14 +1220,14 @@ def run_main():
     to_skip = define_skip_assets()
     materials = get_materials_info()
     assets = get_assets_info()
-    experiment_name = 'experiment_52'
+    experiment_name = 'experiment_53'
 
     #  "beds", "cabinets",  "chairs"
     # ["decor", "electronics", "lamps", "plants", "shelves", "sofas", "tables", "tablesets"]
     # assets = {a: v for a, v in assets.items() if v["category"] == category}
     # asset = assets[list(assets.keys())[i]]
 
-    for i in range(1):
+    for i in range(2):
         asset = get_random_asset(assets, nonrandom_asset="cabinet_38_02", randomness=True)
         logging.info(f"Got asset '{asset['name']}' of type '{asset['category']}'")
 
@@ -1271,6 +1283,10 @@ def run_main():
 
         create_room(asset_size, camera_position, materials, hdri_name, randomness=True)
         take_picture(experiment_name, f'{i}__1')
+
+        set_to_diffuse_rendering()
+        take_picture(experiment_name, f'{i}__7')
+        reset_to_image_rendering()
 
         append_node_group_from_library("normal.blend", "get_normal")
         add_node_group_to_all_materials("get_normal", 'Emission')
