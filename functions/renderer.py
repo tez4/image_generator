@@ -1,4 +1,5 @@
 import os
+import sys
 import bpy
 import uuid
 import math
@@ -1233,6 +1234,8 @@ def reset_to_image_rendering():
 
 def run_main():
     logging.info("Started Program")
+    print(f"Python Version: {sys.version}")
+    print(f"Blender Version: {bpy.app.version_string}")
 
     customize_render_quality(show_background=True, high_quality=True)
     to_skip = define_skip_assets()
@@ -1306,7 +1309,7 @@ def run_main():
         take_picture(experiment_name, f'{i}__7')
         reset_to_image_rendering()
 
-        get_image_difference(experiment_name, f'{i}__7', f'{i}__1', f'{i}__8')
+        # get_image_difference(experiment_name, f'{i}__7', f'{i}__1', f'{i}__8')
 
         append_node_group_from_library("normal.blend", "get_normal")
         add_node_group_to_all_materials("get_normal", 'Emission')
