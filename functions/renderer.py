@@ -6,8 +6,6 @@ import json
 import bmesh
 import random
 import mathutils
-import numpy as np
-from PIL import Image
 from math import radians, atan2, sqrt, acos, degrees
 
 
@@ -831,7 +829,6 @@ def take_picture(folder, image_name):
 
     bpy.context.scene.render.filepath = f'//output/{folder}/{image_name}.png'
     bpy.ops.render.render(write_still=True)
-    # bpy.data.images.remove(bpy.data.images['Render Result'])
 
     logging.debug('ran "take_picture"')
 
@@ -1215,23 +1212,23 @@ def reset_to_image_rendering():
     connect_nodes(node_tree, node_tree.nodes["Render Layers"], "Image", node_tree.nodes["Composite"], "Image")
 
 
-def get_image_difference(experiment_name, image_name_1, image_name_2, new_image_name):
-    # check if images exist
-    if not os.path.exists(f"./output/{experiment_name}/{image_name_1}.png"):
-        logging.critical(f"Image {image_name_1} does not exist in the output folder!")
-        return
-    if not os.path.exists(f"./output/{experiment_name}/{image_name_2}.png"):
-        logging.critical(f"Image {image_name_2} does not exist in the output folder!")
-        return
+# def get_image_difference(experiment_name, image_name_1, image_name_2, new_image_name):
+#     # check if images exist
+#     if not os.path.exists(f"./output/{experiment_name}/{image_name_1}.png"):
+#         logging.critical(f"Image {image_name_1} does not exist in the output folder!")
+#         return
+#     if not os.path.exists(f"./output/{experiment_name}/{image_name_2}.png"):
+#         logging.critical(f"Image {image_name_2} does not exist in the output folder!")
+#         return
 
-    image_1 = Image.open(f"./output/{experiment_name}/{image_name_1}.png")
-    image_2 = Image.open(f"./output/{experiment_name}/{image_name_2}.png")
-    pic_1_array = np.array(image_1).astype('float64')
-    pic_2_array = np.array(image_2).astype('float64')
-    new_array = (pic_2_array - pic_1_array + 255) / 2
-    new_array = new_array[:, :, :3].astype(np.uint8)
-    new_image = Image.fromarray(np.uint8(new_array))
-    new_image.save(f"./output/{experiment_name}/{new_image_name}.png")
+#     image_1 = Image.open(f"./output/{experiment_name}/{image_name_1}.png")
+#     image_2 = Image.open(f"./output/{experiment_name}/{image_name_2}.png")
+#     pic_1_array = np.array(image_1).astype('float64')
+#     pic_2_array = np.array(image_2).astype('float64')
+#     new_array = (pic_2_array - pic_1_array + 255) / 2
+#     new_array = new_array[:, :, :3].astype(np.uint8)
+#     new_image = Image.fromarray(np.uint8(new_array))
+#     new_image.save(f"./output/{experiment_name}/{new_image_name}.png")
 
 
 def run_main():
@@ -1241,7 +1238,7 @@ def run_main():
     to_skip = define_skip_assets()
     materials = get_materials_info()
     assets = get_assets_info()
-    experiment_name = 'experiment_54'
+    experiment_name = 'experiment_55'
 
     #  "beds", "cabinets",  "chairs"
     # ["decor", "electronics", "lamps", "plants", "shelves", "sofas", "tables", "tablesets"]
