@@ -1,0 +1,25 @@
+Bootstrap: docker
+From: ubuntu:20.04
+
+%post
+    apt-get update && apt-get upgrade -y
+
+    # Install dependencies
+    apt-get install -y wget libgl1-mesa-glx libxi6 libxrender1 libxcomposite1
+
+    # Download Blender
+    wget -O blender.tar.xz https://www.blender.org/download/release/Blender3.6/blender-3.6.4-linux-x64.tar.xz/
+
+    # Extract Blender and move it to a suitable location
+    tar -xvf blender.tar.xz
+    mv blender-3.6.0-linux-x64 /opt/blender
+
+    # Clean up
+    rm blender.tar.xz
+    apt-get clean
+
+%environment
+    export PATH=$PATH:/opt/blender
+
+%runscript
+    /opt/blender/blender "$@"
