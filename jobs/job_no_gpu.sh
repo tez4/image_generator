@@ -8,4 +8,4 @@
 
 module load singularity
 
-singularity exec --nv blender_wo_gpu.sif blender --background --python functions/renderer.py
+singularity exec blender_wo_gpu.sif blender --background --python functions/renderer.py
