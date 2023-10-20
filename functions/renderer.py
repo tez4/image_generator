@@ -4,6 +4,7 @@ import bpy
 import uuid
 import math
 import json
+import time
 import bmesh
 import random
 import mathutils
@@ -1182,7 +1183,7 @@ def add_node_group_to_all_materials(node_group_name, output_socket_name):
             add_node_group_to_material(material, node_group_name, output_socket_name)
 
 
-def save_metadata(folder, file_name, asset, camera_position, camera_rotation, distance, hdri_name):
+def save_metadata(folder, file_name, asset, camera_position, camera_rotation, distance, hdri_name, time_difference):
     folder_path = f'./output/{folder}'
     if not os.path.exists(folder_path):
         os.makedirs(folder_path)
@@ -1193,7 +1194,8 @@ def save_metadata(folder, file_name, asset, camera_position, camera_rotation, di
         'camera_position': camera_position,
         'camera_rotation': camera_rotation,
         'distance': distance,
-        'hdri_name': hdri_name
+        'hdri_name': hdri_name,
+        'time_to_compute': time_difference
     }
     with open(file_path, 'w') as outfile:
         json.dump(metadata, outfile)
@@ -1241,7 +1243,7 @@ def run_main():
     to_skip = define_skip_assets()
     materials = get_materials_info()
     assets = get_assets_info()
-    experiment_name = 'experiment_55'
+    experiment_name = 'experiment_57'
 
     #  "beds", "cabinets",  "chairs"
     # ["decor", "electronics", "lamps", "plants", "shelves", "sofas", "tables", "tablesets"]
@@ -1249,6 +1251,7 @@ def run_main():
     # asset = assets[list(assets.keys())[i]]
 
     for i in range(3):
+        start_time = time.time()
         asset = get_random_asset(assets, nonrandom_asset="cabinet_38_02", randomness=True)
         logging.info(f"Got asset '{asset['name']}' of type '{asset['category']}'")
 
@@ -1319,7 +1322,11 @@ def run_main():
         add_node_group_to_all_materials("get_distance", 'Emission')
         take_picture(experiment_name, f'{i}__3')
 
-        save_metadata(experiment_name, f'{i}__0', asset, camera_position, camera_rotation, distance, hdri_name)
+        end_time = time.time()
+        time_difference = int(end_time - start_time)
+        save_metadata(
+            experiment_name, f'{i}__0', asset, camera_position, camera_rotation, distance, hdri_name, time_difference
+        )
 
     logging.info('Done!')
 
