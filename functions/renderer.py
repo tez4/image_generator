@@ -666,6 +666,10 @@ def customize_render_quality(show_background=False, high_quality=True, image_siz
         bpy.data.scenes['Scene'].render.engine = 'CYCLES'
         bpy.data.scenes['Scene'].cycles.device = 'GPU'
         bpy.context.preferences.addons['cycles'].preferences.compute_device_type = 'CUDA'
+        for device in bpy.context.preferences.addons['cycles'].preferences.devices:
+            if device.type == 'CUDA':
+                device.use = True
+        bpy.ops.wm.save_userpref()
         bpy.data.scenes['Scene'].cycles.adaptive_threshold = 0.1
     else:
         bpy.data.scenes['Scene'].render.engine = 'BLENDER_EEVEE'
@@ -1243,7 +1247,7 @@ def run_main():
     to_skip = define_skip_assets()
     materials = get_materials_info()
     assets = get_assets_info()
-    experiment_name = 'experiment_57'
+    experiment_name = 'experiment_61'
 
     #  "beds", "cabinets",  "chairs"
     # ["decor", "electronics", "lamps", "plants", "shelves", "sofas", "tables", "tablesets"]
