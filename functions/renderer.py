@@ -1247,14 +1247,14 @@ def run_main():
     to_skip = define_skip_assets()
     materials = get_materials_info()
     assets = get_assets_info()
-    experiment_name = 'experiment_61'
+    experiment_name = 'experiment_62'
 
     #  "beds", "cabinets",  "chairs"
     # ["decor", "electronics", "lamps", "plants", "shelves", "sofas", "tables", "tablesets"]
     # assets = {a: v for a, v in assets.items() if v["category"] == category}
     # asset = assets[list(assets.keys())[i]]
 
-    for i in range(3):
+    for i in range(1):
         start_time = time.time()
         asset = get_random_asset(assets, nonrandom_asset="cabinet_38_02", randomness=True)
         logging.info(f"Got asset '{asset['name']}' of type '{asset['category']}'")
@@ -1312,9 +1312,9 @@ def run_main():
         create_room(asset_size, camera_position, materials, hdri_name, randomness=True)
         take_picture(experiment_name, f'{i}__1')
 
-        set_to_diffuse_rendering()
-        take_picture(experiment_name, f'{i}__7')
-        reset_to_image_rendering()
+        # set_to_diffuse_rendering()
+        # take_picture(experiment_name, f'{i}__7')
+        # reset_to_image_rendering()
 
         # get_image_difference(experiment_name, f'{i}__7', f'{i}__1', f'{i}__8')
 
