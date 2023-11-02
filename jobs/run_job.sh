@@ -3,11 +3,9 @@
 #SBATCH -t 01:00:00
 #SBATCH --gpus=4
 #SBATCH --job-name=blender_render
-#SBATCH --out=out.log
-#SBATCH --err=err.log
+#SBATCH --output=outerr.log
+#SBATCH --error=outerr.log
 
 module load singularity
-
-
 
 singularity exec --nv blender.sif blender --background --python functions/renderer.py
