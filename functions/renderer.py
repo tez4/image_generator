@@ -665,11 +665,11 @@ def customize_render_quality(show_background=False, high_quality=True, image_siz
     if high_quality:
         bpy.data.scenes['Scene'].render.engine = 'CYCLES'
         bpy.data.scenes['Scene'].cycles.device = 'GPU'
-        bpy.context.preferences.addons['cycles'].preferences.compute_device_type = 'CUDA'
-        for device in bpy.context.preferences.addons['cycles'].preferences.get_devices_for_type('CUDA'):
-            if device.type == 'CUDA':
+        bpy.context.preferences.addons['cycles'].preferences.compute_device_type = 'OPTIX'
+        for device in bpy.context.preferences.addons['cycles'].preferences.get_devices_for_type('OPTIX'):
+            if device.type == 'OPTIX':
                 device.use = True
-                logging.debug(f"CUDA devices{device.name}")
+                logging.debug(f"OPTIX device {device.name}")
         bpy.ops.wm.save_userpref()
         bpy.data.scenes['Scene'].cycles.adaptive_threshold = 0.1
     else:
@@ -1220,32 +1220,7 @@ def reset_to_image_rendering():
     connect_nodes(node_tree, node_tree.nodes["Render Layers"], "Image", node_tree.nodes["Composite"], "Image")
 
 
-# def get_image_difference(experiment_name, image_name_1, image_name_2, new_image_name):
-#     # check if images exist
-#     if not os.path.exists(f"./output/{experiment_name}/{image_name_1}.png"):
-#         logging.critical(f"Image {image_name_1} does not exist in the output folder!")
-#         return
-#     if not os.path.exists(f"./output/{experiment_name}/{image_name_2}.png"):
-#         logging.critical(f"Image {image_name_2} does not exist in the output folder!")
-#         return
-
-#     image_1 = Image.open(f"./output/{experiment_name}/{image_name_1}.png")
-#     image_2 = Image.open(f"./output/{experiment_name}/{image_name_2}.png")
-#     pic_1_array = np.array(image_1).astype('float64')
-#     pic_2_array = np.array(image_2).astype('float64')
-#     new_array = (pic_2_array - pic_1_array + 255) / 2
-#     new_array = new_array[:, :, :3].astype(np.uint8)
-#     new_image = Image.fromarray(np.uint8(new_array))
-#     new_image.save(f"./output/{experiment_name}/{new_image_name}.png")
-
-
 def run_main():
-    # log_file_path = "./logfile.log"
-    # log_file = open(log_file_path, 'w')
-    # old_stdout = sys.stdout
-    # old_stderr = sys.stderr
-    # sys.stdout = log_file
-    # sys.stderr = log_file
 
     logging.info("Started Program")
     print(f"Python Version: {sys.version}")
@@ -1255,14 +1230,14 @@ def run_main():
     to_skip = define_skip_assets()
     materials = get_materials_info()
     assets = get_assets_info()
-    experiment_name = 'experiment_69'
+    experiment_name = 'experiment_73'
 
     #  "beds", "cabinets",  "chairs"
     # ["decor", "electronics", "lamps", "plants", "shelves", "sofas", "tables", "tablesets"]
     # assets = {a: v for a, v in assets.items() if v["category"] == category}
     # asset = assets[list(assets.keys())[i]]
 
-    for i in range(3):
+    for i in range(30):
         start_time = time.time()
         asset = get_random_asset(assets, nonrandom_asset="cabinet_38_02", randomness=True)
         logging.info(f"Got asset '{asset['name']}' of type '{asset['category']}'")
@@ -1293,103 +1268,105 @@ def run_main():
 
         take_picture(experiment_name, f'{i}__8')
 
-        for object in ["Plane_03"]:
-            bpy.data.objects[object].hide_render = True
-            bpy.data.objects[object].hide_viewport = True
+        # for object in ["Plane_03"]:
+        #     bpy.data.objects[object].hide_render = True
+        #     bpy.data.objects[object].hide_viewport = True
 
-        add_asset("//assets/custom_planes/plane_05.blend", 'Plane_05', rotation_degrees=0, randomness=False)
-        logging.debug('added plane asset')
+        # add_asset("//assets/custom_planes/plane_05.blend", 'Plane_05', rotation_degrees=0, randomness=False)
+        # logging.debug('added plane asset')
 
-        take_picture(experiment_name, f'{i}__9')
+        # take_picture(experiment_name, f'{i}__9')
 
-        for object in ["Plane_05"]:
-            bpy.data.objects[object].hide_render = True
-            bpy.data.objects[object].hide_viewport = True
+        # for object in ["Plane_05"]:
+        #     bpy.data.objects[object].hide_render = True
+        #     bpy.data.objects[object].hide_viewport = True
 
-        add_asset("//assets/custom_planes/plane_06.blend", 'Plane_06', rotation_degrees=0, randomness=False)
-        logging.debug('added plane asset')
+        # add_asset("//assets/custom_planes/plane_06.blend", 'Plane_06', rotation_degrees=0, randomness=False)
+        # logging.debug('added plane asset')
 
-        take_picture(experiment_name, f'{i}__10')
+        # take_picture(experiment_name, f'{i}__10')
 
-        for object in ["Plane_06"]:
-            bpy.data.objects[object].hide_render = True
-            bpy.data.objects[object].hide_viewport = True
+        # for object in ["Plane_06"]:
+        #     bpy.data.objects[object].hide_render = True
+        #     bpy.data.objects[object].hide_viewport = True
 
-        add_asset("//assets/custom_planes/plane_07.blend", 'Plane_07', rotation_degrees=0, randomness=False)
-        logging.debug('added plane asset')
+        # add_asset("//assets/custom_planes/plane_07.blend", 'Plane_07', rotation_degrees=0, randomness=False)
+        # logging.debug('added plane asset')
 
-        take_picture(experiment_name, f'{i}__11')
+        # take_picture(experiment_name, f'{i}__11')
 
-        for object in ["Plane_07"]:
-            bpy.data.objects[object].hide_render = True
-            bpy.data.objects[object].hide_viewport = True
+        # for object in ["Plane_07"]:
+        #     bpy.data.objects[object].hide_render = True
+        #     bpy.data.objects[object].hide_viewport = True
 
-        for object in ["Plane_03"]:
-            bpy.data.objects[object].hide_render = False
-            bpy.data.objects[object].hide_viewport = False
+        # for object in ["Plane_03"]:
+        #     bpy.data.objects[object].hide_render = False
+        #     bpy.data.objects[object].hide_viewport = False
 
-        add_asset("//assets/custom_planes/plane_03.blend", 'Plane_03', rotation_degrees=0, randomness=False)
-        logging.debug('added plane asset')
+        # add_asset("//assets/custom_planes/plane_03.blend", 'Plane_03', rotation_degrees=0, randomness=False)
+        # logging.debug('added plane asset')
 
-        add_point_lights(asset_size)
-        logging.debug('added point lights')
+        # add_point_lights(asset_size)
+        # logging.debug('added point lights')
 
-        take_picture(experiment_name, f'{i}__5')
+        # take_picture(experiment_name, f'{i}__5')
 
-        for object in ["Plane_03"]:
-            bpy.data.objects[object].hide_render = True
-            bpy.data.objects[object].hide_viewport = True
+        # for object in ["Plane_03"]:
+        #     bpy.data.objects[object].hide_render = True
+        #     bpy.data.objects[object].hide_viewport = True
 
-        for object in ["Plane_05"]:
-            bpy.data.objects[object].hide_render = False
-            bpy.data.objects[object].hide_viewport = False
+        # for object in ["Plane_05"]:
+        #     bpy.data.objects[object].hide_render = False
+        #     bpy.data.objects[object].hide_viewport = False
 
-        add_asset("//assets/custom_planes/plane_05.blend", 'Plane_05', rotation_degrees=0, randomness=False)
-        logging.debug('added plane asset')
+        # add_asset("//assets/custom_planes/plane_05.blend", 'Plane_05', rotation_degrees=0, randomness=False)
+        # logging.debug('added plane asset')
 
-        take_picture(experiment_name, f'{i}__6')
+        # take_picture(experiment_name, f'{i}__6')
 
-        for object in ["Plane_05"]:
-            bpy.data.objects[object].hide_render = True
-            bpy.data.objects[object].hide_viewport = True
+        # for object in ["Plane_05"]:
+        #     bpy.data.objects[object].hide_render = True
+        #     bpy.data.objects[object].hide_viewport = True
 
-        append_node_group_from_library("pitch_black.blend", "get_pitch_black")
-        asset_material = bpy.data.objects[asset['name']].active_material
-        previous_node, previous_socket_name, output_node = add_node_group_to_material(
-            asset_material, "get_pitch_black", 'Value'
-        )
+        # append_node_group_from_library("pitch_black.blend", "get_pitch_black")
+        # asset_material = bpy.data.objects[asset['name']].active_material
+        # previous_node, previous_socket_name, output_node = add_node_group_to_material(
+        #     asset_material, "get_pitch_black", 'Value'
+        # )
 
-        add_asset("//assets/custom_planes/plane_04.blend", 'Plane_04', rotation_degrees=0, randomness=False)
+        # add_asset("//assets/custom_planes/plane_04.blend", 'Plane_04', rotation_degrees=0, randomness=False)
 
-        take_picture(experiment_name, f'{i}__4')
+        # take_picture(experiment_name, f'{i}__4')
 
-        connect_nodes(asset_material.node_tree, previous_node, previous_socket_name, output_node, "Surface")
+        # connect_nodes(asset_material.node_tree, previous_node, previous_socket_name, output_node, "Surface")
 
-        take_picture(experiment_name, f'{i}__7')
-
-        for object in ["Plane_04", "back_left_light", "back_right_light", "front_light"]:
-            bpy.data.objects[object].hide_render = True
-            bpy.data.objects[object].hide_viewport = True
-
-        hdri, hdri_name = get_random_hdri(randomness=True)
-        add_world_background(hdri, 1.0, 90, randomness=True)
-
-        create_room(asset_size, camera_position, materials, hdri_name, randomness=True)
-        take_picture(experiment_name, f'{i}__1')
-
-        # set_to_diffuse_rendering()
         # take_picture(experiment_name, f'{i}__7')
-        # reset_to_image_rendering()
 
-        # get_image_difference(experiment_name, f'{i}__7', f'{i}__1', f'{i}__8')
+        # for object in ["Plane_04", "back_left_light", "back_right_light", "front_light"]:
+        #     bpy.data.objects[object].hide_render = True
+        #     bpy.data.objects[object].hide_viewport = True
 
-        append_node_group_from_library("normal.blend", "get_normal")
-        add_node_group_to_all_materials("get_normal", 'Emission')
-        take_picture(experiment_name, f'{i}__2')
+        # hdri, hdri_name = get_random_hdri(randomness=True)
+        # add_world_background(hdri, 1.0, 90, randomness=True)
 
-        append_node_group_from_library("distance.blend", "get_distance")
-        add_node_group_to_all_materials("get_distance", 'Emission')
-        take_picture(experiment_name, f'{i}__3')
+        # create_room(asset_size, camera_position, materials, hdri_name, randomness=True)
+        # take_picture(experiment_name, f'{i}__1')
+
+        # # set_to_diffuse_rendering()
+        # # take_picture(experiment_name, f'{i}__7')
+        # # reset_to_image_rendering()
+
+        # # get_image_difference(experiment_name, f'{i}__7', f'{i}__1', f'{i}__8')
+
+        # append_node_group_from_library("normal.blend", "get_normal")
+        # add_node_group_to_all_materials("get_normal", 'Emission')
+        # take_picture(experiment_name, f'{i}__2')
+
+        # append_node_group_from_library("distance.blend", "get_distance")
+        # add_node_group_to_all_materials("get_distance", 'Emission')
+        # take_picture(experiment_name, f'{i}__3')
+
+        hdri_name = 'temp wrong #TODO'
 
         end_time = time.time()
         time_difference = int(end_time - start_time)
@@ -1398,23 +1375,6 @@ def run_main():
         )
 
     logging.info('Done!')
-
-    # for i, material in enumerate(materials.keys()):
-    #     if len(materials[material]['types']) > 0:
-    #         remove_old_objects()
-    #         add_camera((1.5, 1.5, 1.5), False)
-
-    #         create_plane_from_coords('z', 0, (-1, -2), (1, 1), False, materials[material])
-    #         create_plane_from_coords('z', 2, (-1, -2), (1, 1), True, materials[material])
-    #         create_plane_from_coords('y', 1, (-1, 0), (1, 2), False, materials[material])
-    #         create_plane_from_coords('x', -1, (-2, 0), (1, 2), False, materials[material])
-    #         create_plane_from_coords('x', 1, (-2, 0), (1, 2), True, materials[material])
-
-    #         add_world_background("//assets/background/abandoned_slipway_4k.exr", 1.0)
-
-    #         take_picture(experiment_name, f'{i}____{material}')
-
-    # logging.info('Done!')
 
 
 run_main()
