@@ -1240,6 +1240,13 @@ def reset_to_image_rendering():
 
 
 def run_main():
+    log_file_path = "./logfile.log"
+    log_file = open(log_file_path, 'w')
+    # old_stdout = sys.stdout
+    # old_stderr = sys.stderr
+    sys.stdout = log_file
+    sys.stderr = log_file
+
     logging.info("Started Program")
     print(f"Python Version: {sys.version}")
     print(f"Blender Version: {bpy.app.version_string}")
