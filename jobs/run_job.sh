@@ -8,4 +8,6 @@
 
 module load singularity
 
-singularity exec --nvccli blender.sif blender --background --python functions/renderer.py
+
+
+singularity exec --nv blender.sif blender --background --python functions/renderer.py
