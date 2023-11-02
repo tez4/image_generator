@@ -8,6 +8,7 @@ import time
 import bmesh
 import random
 import mathutils
+from mathutils import Matrix, Vector
 from math import radians, atan2, sqrt, acos, degrees
 
 
@@ -726,22 +727,19 @@ def angle_of_vectors(a, b):
     return result
 
 
-def rotate_object_around_point(object_name, point=(0, 0, 0), rotation=45, axis='Z'):
+def rotate_object_around_point(object_name, point=(0, 0, 0), rotation=45):
 
     bpy.ops.object.select_all(action='DESELECT')
     if object_name in bpy.data.objects:
         obj = bpy.data.objects[object_name]
-        obj.select_set(True)
-        bpy.context.view_layer.objects.active = obj
 
-        original_pivot = bpy.context.scene.tool_settings.transform_pivot_point
-        bpy.context.scene.tool_settings.transform_pivot_point = 'CURSOR'
-        bpy.context.scene.cursor.location = point
-
-        bpy.ops.transform.rotate(value=radians(rotation), orient_axis=axis)
-
-        bpy.context.scene.tool_settings.transform_pivot_point = original_pivot
-
+        point = Vector(point)
+        rad_rotation = math.radians(rotation)
+        to_origin_mat = Matrix.Translation(-point)
+        rot_mat = Matrix.Rotation(rad_rotation, 4, 'Z')
+        to_point_mat = Matrix.Translation(point)
+        current_mat = obj.matrix_world
+        obj.matrix_world = to_point_mat @ rot_mat @ to_origin_mat @ current_mat
     else:
         logging.warning(f"Object named {object_name} does not exist in the current scene.")
 
@@ -1230,14 +1228,14 @@ def run_main():
     to_skip = define_skip_assets()
     materials = get_materials_info()
     assets = get_assets_info()
-    experiment_name = 'experiment_73'
+    experiment_name = 'experiment_76'
 
     #  "beds", "cabinets",  "chairs"
     # ["decor", "electronics", "lamps", "plants", "shelves", "sofas", "tables", "tablesets"]
     # assets = {a: v for a, v in assets.items() if v["category"] == category}
     # asset = assets[list(assets.keys())[i]]
 
-    for i in range(30):
+    for i in range(20):
         start_time = time.time()
         asset = get_random_asset(assets, nonrandom_asset="cabinet_38_02", randomness=True)
         logging.info(f"Got asset '{asset['name']}' of type '{asset['category']}'")
@@ -1268,105 +1266,103 @@ def run_main():
 
         take_picture(experiment_name, f'{i}__8')
 
-        # for object in ["Plane_03"]:
-        #     bpy.data.objects[object].hide_render = True
-        #     bpy.data.objects[object].hide_viewport = True
+        for object in ["Plane_03"]:
+            bpy.data.objects[object].hide_render = True
+            bpy.data.objects[object].hide_viewport = True
 
-        # add_asset("//assets/custom_planes/plane_05.blend", 'Plane_05', rotation_degrees=0, randomness=False)
-        # logging.debug('added plane asset')
+        add_asset("//assets/custom_planes/plane_05.blend", 'Plane_05', rotation_degrees=0, randomness=False)
+        logging.debug('added plane asset')
 
-        # take_picture(experiment_name, f'{i}__9')
+        take_picture(experiment_name, f'{i}__9')
 
-        # for object in ["Plane_05"]:
-        #     bpy.data.objects[object].hide_render = True
-        #     bpy.data.objects[object].hide_viewport = True
+        for object in ["Plane_05"]:
+            bpy.data.objects[object].hide_render = True
+            bpy.data.objects[object].hide_viewport = True
 
-        # add_asset("//assets/custom_planes/plane_06.blend", 'Plane_06', rotation_degrees=0, randomness=False)
-        # logging.debug('added plane asset')
+        add_asset("//assets/custom_planes/plane_06.blend", 'Plane_06', rotation_degrees=0, randomness=False)
+        logging.debug('added plane asset')
 
-        # take_picture(experiment_name, f'{i}__10')
+        take_picture(experiment_name, f'{i}__10')
 
-        # for object in ["Plane_06"]:
-        #     bpy.data.objects[object].hide_render = True
-        #     bpy.data.objects[object].hide_viewport = True
+        for object in ["Plane_06"]:
+            bpy.data.objects[object].hide_render = True
+            bpy.data.objects[object].hide_viewport = True
 
-        # add_asset("//assets/custom_planes/plane_07.blend", 'Plane_07', rotation_degrees=0, randomness=False)
-        # logging.debug('added plane asset')
+        add_asset("//assets/custom_planes/plane_07.blend", 'Plane_07', rotation_degrees=0, randomness=False)
+        logging.debug('added plane asset')
 
-        # take_picture(experiment_name, f'{i}__11')
+        take_picture(experiment_name, f'{i}__11')
 
-        # for object in ["Plane_07"]:
-        #     bpy.data.objects[object].hide_render = True
-        #     bpy.data.objects[object].hide_viewport = True
+        for object in ["Plane_07"]:
+            bpy.data.objects[object].hide_render = True
+            bpy.data.objects[object].hide_viewport = True
 
-        # for object in ["Plane_03"]:
-        #     bpy.data.objects[object].hide_render = False
-        #     bpy.data.objects[object].hide_viewport = False
+        for object in ["Plane_03"]:
+            bpy.data.objects[object].hide_render = False
+            bpy.data.objects[object].hide_viewport = False
 
-        # add_asset("//assets/custom_planes/plane_03.blend", 'Plane_03', rotation_degrees=0, randomness=False)
-        # logging.debug('added plane asset')
+        add_asset("//assets/custom_planes/plane_03.blend", 'Plane_03', rotation_degrees=0, randomness=False)
+        logging.debug('added plane asset')
 
-        # add_point_lights(asset_size)
-        # logging.debug('added point lights')
+        add_point_lights(asset_size)
+        logging.debug('added point lights')
 
-        # take_picture(experiment_name, f'{i}__5')
+        take_picture(experiment_name, f'{i}__5')
 
-        # for object in ["Plane_03"]:
-        #     bpy.data.objects[object].hide_render = True
-        #     bpy.data.objects[object].hide_viewport = True
+        for object in ["Plane_03"]:
+            bpy.data.objects[object].hide_render = True
+            bpy.data.objects[object].hide_viewport = True
 
-        # for object in ["Plane_05"]:
-        #     bpy.data.objects[object].hide_render = False
-        #     bpy.data.objects[object].hide_viewport = False
+        for object in ["Plane_05"]:
+            bpy.data.objects[object].hide_render = False
+            bpy.data.objects[object].hide_viewport = False
 
-        # add_asset("//assets/custom_planes/plane_05.blend", 'Plane_05', rotation_degrees=0, randomness=False)
-        # logging.debug('added plane asset')
+        add_asset("//assets/custom_planes/plane_05.blend", 'Plane_05', rotation_degrees=0, randomness=False)
+        logging.debug('added plane asset')
 
-        # take_picture(experiment_name, f'{i}__6')
+        take_picture(experiment_name, f'{i}__6')
 
-        # for object in ["Plane_05"]:
-        #     bpy.data.objects[object].hide_render = True
-        #     bpy.data.objects[object].hide_viewport = True
+        for object in ["Plane_05"]:
+            bpy.data.objects[object].hide_render = True
+            bpy.data.objects[object].hide_viewport = True
 
-        # append_node_group_from_library("pitch_black.blend", "get_pitch_black")
-        # asset_material = bpy.data.objects[asset['name']].active_material
-        # previous_node, previous_socket_name, output_node = add_node_group_to_material(
-        #     asset_material, "get_pitch_black", 'Value'
-        # )
+        append_node_group_from_library("pitch_black.blend", "get_pitch_black")
+        asset_material = bpy.data.objects[asset['name']].active_material
+        previous_node, previous_socket_name, output_node = add_node_group_to_material(
+            asset_material, "get_pitch_black", 'Value'
+        )
 
-        # add_asset("//assets/custom_planes/plane_04.blend", 'Plane_04', rotation_degrees=0, randomness=False)
+        add_asset("//assets/custom_planes/plane_04.blend", 'Plane_04', rotation_degrees=0, randomness=False)
 
-        # take_picture(experiment_name, f'{i}__4')
+        take_picture(experiment_name, f'{i}__4')
 
-        # connect_nodes(asset_material.node_tree, previous_node, previous_socket_name, output_node, "Surface")
+        connect_nodes(asset_material.node_tree, previous_node, previous_socket_name, output_node, "Surface")
 
+        take_picture(experiment_name, f'{i}__7')
+
+        for object in ["Plane_04", "back_left_light", "back_right_light", "front_light"]:
+            bpy.data.objects[object].hide_render = True
+            bpy.data.objects[object].hide_viewport = True
+
+        hdri, hdri_name = get_random_hdri(randomness=True)
+        add_world_background(hdri, 1.0, 90, randomness=True)
+
+        create_room(asset_size, camera_position, materials, hdri_name, randomness=True)
+        take_picture(experiment_name, f'{i}__1')
+
+        # set_to_diffuse_rendering()
         # take_picture(experiment_name, f'{i}__7')
+        # reset_to_image_rendering()
 
-        # for object in ["Plane_04", "back_left_light", "back_right_light", "front_light"]:
-        #     bpy.data.objects[object].hide_render = True
-        #     bpy.data.objects[object].hide_viewport = True
+        # get_image_difference(experiment_name, f'{i}__7', f'{i}__1', f'{i}__8')
 
-        # hdri, hdri_name = get_random_hdri(randomness=True)
-        # add_world_background(hdri, 1.0, 90, randomness=True)
+        append_node_group_from_library("normal.blend", "get_normal")
+        add_node_group_to_all_materials("get_normal", 'Emission')
+        take_picture(experiment_name, f'{i}__2')
 
-        # create_room(asset_size, camera_position, materials, hdri_name, randomness=True)
-        # take_picture(experiment_name, f'{i}__1')
-
-        # # set_to_diffuse_rendering()
-        # # take_picture(experiment_name, f'{i}__7')
-        # # reset_to_image_rendering()
-
-        # # get_image_difference(experiment_name, f'{i}__7', f'{i}__1', f'{i}__8')
-
-        # append_node_group_from_library("normal.blend", "get_normal")
-        # add_node_group_to_all_materials("get_normal", 'Emission')
-        # take_picture(experiment_name, f'{i}__2')
-
-        # append_node_group_from_library("distance.blend", "get_distance")
-        # add_node_group_to_all_materials("get_distance", 'Emission')
-        # take_picture(experiment_name, f'{i}__3')
-
-        hdri_name = 'temp wrong #TODO'
+        append_node_group_from_library("distance.blend", "get_distance")
+        add_node_group_to_all_materials("get_distance", 'Emission')
+        take_picture(experiment_name, f'{i}__3')
 
         end_time = time.time()
         time_difference = int(end_time - start_time)
