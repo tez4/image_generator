@@ -1,25 +1,9 @@
 Bootstrap: docker
-From: ubuntu:16.04
+From: linuxserver/blender
 
 %post
-    apt-get update && apt-get upgrade -y
-
-    # Install dependencies
-    apt-get install -y wget libgl1-mesa-glx libxi6 libxrender1 libxcomposite1 xz-utils
-
-    # Download Blender
-    wget -O blender.tar.xz https://download.blender.org/release/Blender3.6/blender-3.6.4-linux-x64.tar.xz
-
-    # Extract Blender and move it to a suitable location
-    tar -xvf blender.tar.xz
-    mv blender-3.6.4-linux-x64 /opt/blender
-
-    # Clean up
-    rm blender.tar.xz
-    apt-get clean
+    echo "Installing necessary dependencies..."
+    apt-get update && apt-get install -y nvidia-cuda-toolkit
 
 %environment
-    export PATH=$PATH:/opt/blender
-
-%runscript
-    /opt/blender/blender "$@"
+    export NVIDIA_VISIBLE_DEVICES=all

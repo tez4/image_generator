@@ -1,9 +1,0 @@
-Bootstrap: docker
-From: linuxserver/blender
-
-%post
-    echo "Installing necessary dependencies..."
-    apt-get update && apt-get install -y nvidia-cuda-toolkit
-
-%environment
-    export NVIDIA_VISIBLE_DEVICES=all

@@ -1,3 +1,5 @@
 /assets/**
 /output/**
 **/__pycache__/**
+**.sif
+**.log

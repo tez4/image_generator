@@ -1,0 +1,6 @@
+Bootstrap: docker
+From: linuxserver/blender
+
+%post
+    apt-get update
+    apt-get upgrade -y
