@@ -666,9 +666,10 @@ def customize_render_quality(show_background=False, high_quality=True, image_siz
         bpy.data.scenes['Scene'].render.engine = 'CYCLES'
         bpy.data.scenes['Scene'].cycles.device = 'GPU'
         bpy.context.preferences.addons['cycles'].preferences.compute_device_type = 'CUDA'
-        for device in bpy.context.preferences.addons['cycles'].preferences.devices:
+        for device in bpy.context.preferences.addons['cycles'].preferences.get_devices_for_type('CUDA'):
             if device.type == 'CUDA':
                 device.use = True
+                logging.debug(f"CUDA devices{device.name}")
         bpy.ops.wm.save_userpref()
         bpy.data.scenes['Scene'].cycles.adaptive_threshold = 0.1
     else:
