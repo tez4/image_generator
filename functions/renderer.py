@@ -1237,7 +1237,7 @@ def run_main():
     to_skip = define_skip_assets()
     materials = get_materials_info()
     assets = get_assets_info()
-    experiment_name = 'experiment_82'
+    experiment_name = 'experiment_84'
 
     #  "beds", "cabinets",  "chairs"
     # ["decor", "electronics", "lamps", "plants", "shelves", "sofas", "tables", "tablesets"]
@@ -1330,6 +1330,7 @@ def run_main():
 
         append_node_group_from_library("distance.blend", "get_distance")
         add_node_group_to_all_materials("get_distance", 'Emission')
+        bpy.data.node_groups['get_distance'].nodes["Map Range"].inputs[2].default_value = distance * 2
         take_picture(experiment_name, f'{i}__3')
 
         end_time = time.time()
