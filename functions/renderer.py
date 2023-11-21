@@ -9,7 +9,6 @@ import bmesh
 import random
 import mathutils
 import numpy as np
-from PIL import Image
 from mathutils import Matrix, Vector
 from math import radians, atan2, sqrt, acos, degrees
 
@@ -1232,8 +1231,8 @@ def reset_to_image_rendering():
 
 
 def get_average_brightness(experiment_name, image_name):
-    pic = Image.open(f"./output/{experiment_name}/{image_name}.png")
-    pic_array = np.array(pic).astype('float64')
+    pic = bpy.data.images.load(f"//output/{experiment_name}/{image_name}.png")
+    pic_array = np.array(pic.pixels[:]).reshape((1024, 1024, 4)) * 255
     return np.mean(pic_array[:, :, :3])
 
 
