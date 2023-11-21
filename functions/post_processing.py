@@ -4,9 +4,11 @@ from PIL import Image
 from copy import deepcopy
 
 
-def create_white_background():
-    pic_1 = Image.open("./output/experiment_76/0__4.png")
-    pic_2 = Image.open("./output/experiment_76/0__5.png")
+def create_white_background(
+        experiment_name, object_number, mask_image_number, image_number, new_image_number, background_change):
+
+    pic_1 = Image.open(f"./output/{experiment_name}/{object_number}__{mask_image_number}.png")
+    pic_2 = Image.open(f"./output/{experiment_name}/{object_number}__{image_number}.png")
     pic_1_array = np.array(pic_1).astype('float64')
     pic_2_array = np.array(pic_2).astype('float64')
     binary_array = (pic_1_array < 125).astype(int)
@@ -14,14 +16,14 @@ def create_white_background():
     new_object[binary_array == 0] = 255
     new_background = deepcopy(pic_2_array)
     new_background[binary_array == 1] = 255
-    new_background += 60
+    new_background += background_change
     new_background[new_background >= 255] = 255
     new_background -= 255
     new_background *= 2
     new_background += 255
     new_array = np.minimum(new_object, new_background)
     new_image = Image.fromarray(np.uint8(new_array))
-    new_image.save("./output/experiment_76/0__12.png")
+    new_image.save(f"./output/{experiment_name}/{object_number}__{new_image_number}.png")
     # new_image.show()
 
 
@@ -51,4 +53,5 @@ def get_image_from_array(array):
 
 
 if __name__ == "__main__":
-    create_white_background()
+    create_white_background('experiment_80', 0, 4, 10, 12, 55)
+    create_white_background('experiment_80', 0, 4, 11, 13, 80)
