@@ -1,3 +1,4 @@
+import os
 import numpy as np
 import matplotlib.pyplot as plt
 from PIL import Image
@@ -62,6 +63,17 @@ def get_image_from_array(array):
 
 
 if __name__ == "__main__":
-    create_white_background('experiment_81', 0, 4, 8, 12, 35, 1, 1)
-    create_white_background('experiment_81', 0, 4, 10, 13, 55, 2, 1.5)
-    create_white_background('experiment_81', 0, 4, 11, 14, 85, 2, 1.5)
+    # loop over all images in the folder
+    experiment = 'experiment_82'
+    folder = f'./output/{experiment}'
+
+    object_numbers = []
+    for file in os.listdir(folder):
+        if file.endswith(".json"):
+            object_number = file.split('__')[0]
+            object_numbers.append(object_number)
+
+    for object_number in object_numbers:
+        create_white_background(experiment, object_number, 4, 8, 12, 35, 1, 1)
+        create_white_background(experiment, object_number, 4, 10, 13, 55, 1.6, 1.15)
+        create_white_background(experiment, object_number, 4, 11, 14, 85, 1.4, 1.2)
