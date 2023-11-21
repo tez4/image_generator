@@ -788,9 +788,14 @@ def add_camera(asset_size, randomness=True):
 
     bpy.data.cameras['Camera'].lens_unit = 'FOV'
     bpy.data.cameras['Camera'].angle = fov_angle * 2 * 1.2
-    # bpy.context.active_object.data.dof.use_dof = True
-    # bpy.context.active_object.data.dof.focus_distance = 2
-    # bpy.context.active_object.data.dof.aperture_fstop = 0.8
+
+    imperfect_focus_random = random.random() if randomness else 0.5
+    f_stop_random = random.random() if randomness else 0.5
+
+    cam_data.dof.use_dof = True
+    cam_data.dof.focus_distance = distance + distance * 0.4 * (imperfect_focus_random - 0.5)
+    f_stop = 5.6 + (f_stop_random - 0.5) * 3.6
+    cam_data.dof.aperture_fstop = f_stop
 
     camera_rotation_random = random.random() - 0.5 if randomness else 0
     camera_rotation = camera_rotation_random * 40
@@ -801,7 +806,7 @@ def add_camera(asset_size, randomness=True):
 
     logging.debug('ran "add_camera"')
 
-    return camera_position, camera_rotation, distance
+    return camera_position, camera_rotation, distance, f_stop
 
 
 def add_light(name, location, radius, energy, light_type='POINT'):
@@ -1197,7 +1202,9 @@ def add_node_group_to_all_materials(node_group_name, output_socket_name):
 
 
 def save_metadata(
-        folder, file_name, asset, camera_position, camera_rotation, distance, hdri_name, time_difference, brightness):
+        folder, file_name, asset, camera_position, camera_rotation, distance, hdri_name, time_difference, brightness,
+        f_stop):
+
     folder_path = f'./output/{folder}'
     if not os.path.exists(folder_path):
         os.makedirs(folder_path)
@@ -1211,6 +1218,7 @@ def save_metadata(
         'hdri_name': hdri_name,
         'time_to_compute': time_difference,
         'brightness': brightness,
+        'f_stop': f_stop,
     }
     with open(file_path, 'w') as outfile:
         json.dump(metadata, outfile)
@@ -1246,7 +1254,7 @@ def run_main():
     to_skip = define_skip_assets()
     materials = get_materials_info()
     assets = get_assets_info()
-    experiment_name = 'experiment_91'
+    experiment_name = 'experiment_93'
 
     #  "beds", "cabinets",  "chairs"
     # ["decor", "electronics", "lamps", "plants", "shelves", "sofas", "tables", "tablesets"]
@@ -1260,9 +1268,9 @@ def run_main():
     #     hdri = f"//assets/background/{exr_file}"
     #     hdri_name = exr_file
 
-    for i in range(1):
+    for i in range(10):
         start_time = time.time()
-        asset = get_random_asset(assets, nonrandom_asset="chair_109_01", randomness=False)
+        asset = get_random_asset(assets, nonrandom_asset="chair_109_01", randomness=True)
         logging.info(f"Got asset '{asset['name']}' of type '{asset['category']}'")
 
         if asset["name"] in to_skip:
@@ -1275,7 +1283,7 @@ def run_main():
             logging.debug('ran "asset skipped because too big"')
             continue
 
-        camera_position, camera_rotation, distance = add_camera(asset_size, randomness=True)
+        camera_position, camera_rotation, distance, f_stop = add_camera(asset_size, randomness=True)
         bpy.data.objects[asset['name']].rotation_euler[2] += radians(-camera_rotation)
         asset_size = get_asset_size(asset['name'])
         logging.debug(f'cam at: {camera_position} with distance {distance}')
@@ -1362,7 +1370,7 @@ def run_main():
         time_difference = int(end_time - start_time)
         save_metadata(
             experiment_name, f'{i}__0', asset, camera_position, camera_rotation, distance, hdri_name, time_difference,
-            brightness
+            brightness, f_stop
         )
 
     logging.info('Done!')
