@@ -5,23 +5,32 @@ from copy import deepcopy
 
 
 def create_white_background(
-        experiment_name, object_number, mask_image_number, image_number, new_image_number, background_change):
+        experiment_name, object_number, mask_image_number, image_number, new_image_number, background_change,
+        shadow_contrast_multiplier, object_contrast_multiplier):
 
     pic_1 = Image.open(f"./output/{experiment_name}/{object_number}__{mask_image_number}.png")
     pic_2 = Image.open(f"./output/{experiment_name}/{object_number}__{image_number}.png")
+    pic_1 = pic_1.resize(pic_2.size)
+
     pic_1_array = np.array(pic_1).astype('float64')
     pic_2_array = np.array(pic_2).astype('float64')
-    binary_array = (pic_1_array < 125).astype(int)
+
+    mask_array = pic_1_array / 230
+    mask_array[mask_array > 1] = 1
+
     new_object = deepcopy(pic_2_array)
-    new_object[binary_array == 0] = 255
+    new_object *= object_contrast_multiplier
+    new_object[new_object > 255] = 255
+
     new_background = deepcopy(pic_2_array)
-    new_background[binary_array == 1] = 255
     new_background += background_change
     new_background[new_background >= 255] = 255
     new_background -= 255
-    new_background *= 2
+    new_background *= shadow_contrast_multiplier
     new_background += 255
-    new_array = np.minimum(new_object, new_background)
+    new_background[new_background < 0] = 0
+
+    new_array = mask_array * new_background + (1 - mask_array) * new_object
     new_image = Image.fromarray(np.uint8(new_array))
     new_image.save(f"./output/{experiment_name}/{object_number}__{new_image_number}.png")
     # new_image.show()
@@ -53,5 +62,6 @@ def get_image_from_array(array):
 
 
 if __name__ == "__main__":
-    create_white_background('experiment_80', 0, 4, 10, 12, 55)
-    create_white_background('experiment_80', 0, 4, 11, 13, 80)
+    create_white_background('experiment_81', 0, 4, 8, 12, 35, 1, 1)
+    create_white_background('experiment_81', 0, 4, 10, 13, 55, 2, 1.5)
+    create_white_background('experiment_81', 0, 4, 11, 14, 85, 2, 1.5)
