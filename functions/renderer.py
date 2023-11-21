@@ -1246,7 +1246,7 @@ def run_main():
     to_skip = define_skip_assets()
     materials = get_materials_info()
     assets = get_assets_info()
-    experiment_name = 'experiment_89'
+    experiment_name = 'experiment_91'
 
     #  "beds", "cabinets",  "chairs"
     # ["decor", "electronics", "lamps", "plants", "shelves", "sofas", "tables", "tablesets"]
@@ -1260,7 +1260,7 @@ def run_main():
     #     hdri = f"//assets/background/{exr_file}"
     #     hdri_name = exr_file
 
-    for i in range(20):
+    for i in range(1):
         start_time = time.time()
         asset = get_random_asset(assets, nonrandom_asset="chair_109_01", randomness=False)
         logging.info(f"Got asset '{asset['name']}' of type '{asset['category']}'")
@@ -1311,10 +1311,14 @@ def run_main():
             bpy.data.objects[object].hide_viewport = True
 
         append_node_group_from_library("pitch_black.blend", "get_pitch_black")
-        asset_material = bpy.data.objects[asset['name']].active_material
-        previous_node, previous_socket_name, output_node = add_node_group_to_material(
-            asset_material, "get_pitch_black", 'Value'
-        )
+        asset_materials = [ms.material for ms in bpy.data.objects[asset['name']].material_slots]
+        # asset_material = bpy.data.objects[asset['name']].active_material
+        previous_connections = []
+        for asset_material in asset_materials:
+            previous_node, previous_socket_name, output_node = add_node_group_to_material(
+                asset_material, "get_pitch_black", 'Value'
+            )
+            previous_connections.append((asset_material, previous_node, previous_socket_name, output_node))
 
         add_asset("//assets/custom_planes/plane_04.blend", 'Plane_04', rotation_degrees=0, randomness=False)
 
@@ -1322,7 +1326,8 @@ def run_main():
         take_picture(experiment_name, f'{i}__4')
         customize_render_resolution(1024)
 
-        connect_nodes(asset_material.node_tree, previous_node, previous_socket_name, output_node, "Surface")
+        for asset_material, previous_node, previous_socket_name, output_node in previous_connections:
+            connect_nodes(asset_material.node_tree, previous_node, previous_socket_name, output_node, "Surface")
 
         for object in ["Plane_04"]:  # , "back_left_light", "back_right_light", "front_light"]:
             bpy.data.objects[object].hide_render = True
