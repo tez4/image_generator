@@ -8,6 +8,7 @@ fake-bpy-module-latest = "*"
 pillow = "*"
 numpy = "*"
 matplotlib = "*"
+opencv-python = "*"
 
 [dev-packages]
 
