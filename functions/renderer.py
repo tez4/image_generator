@@ -1228,29 +1228,29 @@ def run_main():
     to_skip = define_skip_assets()
     materials = get_materials_info()
     assets = get_assets_info()
-    experiment_name = 'experiment_76'
+    experiment_name = 'experiment_80'
 
     #  "beds", "cabinets",  "chairs"
     # ["decor", "electronics", "lamps", "plants", "shelves", "sofas", "tables", "tablesets"]
     # assets = {a: v for a, v in assets.items() if v["category"] == category}
     # asset = assets[list(assets.keys())[i]]
 
-    for i in range(20):
+    for i in range(1):
         start_time = time.time()
-        asset = get_random_asset(assets, nonrandom_asset="cabinet_38_02", randomness=True)
+        asset = get_random_asset(assets, nonrandom_asset="chair_109_01", randomness=False)
         logging.info(f"Got asset '{asset['name']}' of type '{asset['category']}'")
 
         if asset["name"] in to_skip:
             continue
 
         remove_old_objects()
-        add_asset(f"//assets/interior_models/{asset['file']}", asset['name'], 0, randomness=True)
+        add_asset(f"//assets/interior_models/{asset['file']}", asset['name'], 30, randomness=False)
         asset_size = get_asset_size(asset['name'])
         if asset_size[2] > 2.6:
             logging.debug('ran "asset skipped because too big"')
             continue
 
-        camera_position, camera_rotation, distance = add_camera(asset_size, randomness=True)
+        camera_position, camera_rotation, distance = add_camera(asset_size, randomness=False)
         bpy.data.objects[asset['name']].rotation_euler[2] += radians(-camera_rotation)
         asset_size = get_asset_size(asset['name'])
         logging.debug(f'cam at: {camera_position} with distance {distance}')
@@ -1258,71 +1258,39 @@ def run_main():
         add_world_background("//assets/background/abandoned_slipway_4k.exr", 1, 270, randomness=False)
         logging.debug('added world background')
 
-        add_asset("//assets/custom_planes/plane_03.blend", 'Plane_03', rotation_degrees=0, randomness=False)
+        add_asset("//assets/custom_planes/plane_08.blend", 'Plane_08', rotation_degrees=0, randomness=False)
         logging.debug('added plane asset')
-
-        add_point_lights(asset_size)
-        logging.debug('added point lights')
 
         take_picture(experiment_name, f'{i}__8')
 
-        for object in ["Plane_03"]:
+        for object in ["Plane_08"]:
             bpy.data.objects[object].hide_render = True
             bpy.data.objects[object].hide_viewport = True
 
-        add_asset("//assets/custom_planes/plane_05.blend", 'Plane_05', rotation_degrees=0, randomness=False)
+        add_asset("//assets/custom_planes/plane_09.blend", 'Plane_09', rotation_degrees=0, randomness=False)
         logging.debug('added plane asset')
 
         take_picture(experiment_name, f'{i}__9')
 
-        for object in ["Plane_05"]:
+        for object in ["Plane_09"]:
             bpy.data.objects[object].hide_render = True
             bpy.data.objects[object].hide_viewport = True
 
-        add_asset("//assets/custom_planes/plane_06.blend", 'Plane_06', rotation_degrees=0, randomness=False)
+        add_asset("//assets/custom_planes/plane_10.blend", 'Plane_10', rotation_degrees=0, randomness=False)
         logging.debug('added plane asset')
 
         take_picture(experiment_name, f'{i}__10')
 
-        for object in ["Plane_06"]:
+        for object in ["Plane_10"]:
             bpy.data.objects[object].hide_render = True
             bpy.data.objects[object].hide_viewport = True
 
-        add_asset("//assets/custom_planes/plane_07.blend", 'Plane_07', rotation_degrees=0, randomness=False)
+        add_asset("//assets/custom_planes/plane_11.blend", 'Plane_11', rotation_degrees=0, randomness=False)
         logging.debug('added plane asset')
 
         take_picture(experiment_name, f'{i}__11')
 
-        for object in ["Plane_07"]:
-            bpy.data.objects[object].hide_render = True
-            bpy.data.objects[object].hide_viewport = True
-
-        for object in ["Plane_03"]:
-            bpy.data.objects[object].hide_render = False
-            bpy.data.objects[object].hide_viewport = False
-
-        add_asset("//assets/custom_planes/plane_03.blend", 'Plane_03', rotation_degrees=0, randomness=False)
-        logging.debug('added plane asset')
-
-        add_point_lights(asset_size)
-        logging.debug('added point lights')
-
-        take_picture(experiment_name, f'{i}__5')
-
-        for object in ["Plane_03"]:
-            bpy.data.objects[object].hide_render = True
-            bpy.data.objects[object].hide_viewport = True
-
-        for object in ["Plane_05"]:
-            bpy.data.objects[object].hide_render = False
-            bpy.data.objects[object].hide_viewport = False
-
-        add_asset("//assets/custom_planes/plane_05.blend", 'Plane_05', rotation_degrees=0, randomness=False)
-        logging.debug('added plane asset')
-
-        take_picture(experiment_name, f'{i}__6')
-
-        for object in ["Plane_05"]:
+        for object in ["Plane_11"]:
             bpy.data.objects[object].hide_render = True
             bpy.data.objects[object].hide_viewport = True
 
@@ -1340,14 +1308,14 @@ def run_main():
 
         take_picture(experiment_name, f'{i}__7')
 
-        for object in ["Plane_04", "back_left_light", "back_right_light", "front_light"]:
+        for object in ["Plane_04"]:  # , "back_left_light", "back_right_light", "front_light"]:
             bpy.data.objects[object].hide_render = True
             bpy.data.objects[object].hide_viewport = True
 
         hdri, hdri_name = get_random_hdri(randomness=True)
         add_world_background(hdri, 1.0, 90, randomness=True)
 
-        create_room(asset_size, camera_position, materials, hdri_name, randomness=True)
+        create_room(asset_size, camera_position, materials, hdri_name, randomness=False)
         take_picture(experiment_name, f'{i}__1')
 
         # set_to_diffuse_rendering()
