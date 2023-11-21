@@ -712,6 +712,15 @@ def customize_render_quality(show_background=False, high_quality=True, image_siz
     logging.debug('ran "customize_render_quality"')
 
 
+def customize_render_resolution(image_size):
+    if 'Scene' not in bpy.data.scenes:
+        logging.critical('Error! No scene named "Scene". Error happened in customize_render_resolution()')
+    bpy.data.scenes['Scene'].render.resolution_x = image_size
+    bpy.data.scenes['Scene'].render.resolution_y = image_size
+
+    logging.debug('ran "customize_render_resolution"')
+
+
 def angle_of_vectors(a, b):
     a_x, a_y = a
     b_x, b_y = b
@@ -1224,20 +1233,20 @@ def run_main():
     print(f"Python Version: {sys.version}")
     print(f"Blender Version: {bpy.app.version_string}")
 
-    customize_render_quality(show_background=True, high_quality=True)
+    customize_render_quality(show_background=True, high_quality=True, image_size=1024)
     to_skip = define_skip_assets()
     materials = get_materials_info()
     assets = get_assets_info()
-    experiment_name = 'experiment_80'
+    experiment_name = 'experiment_82'
 
     #  "beds", "cabinets",  "chairs"
     # ["decor", "electronics", "lamps", "plants", "shelves", "sofas", "tables", "tablesets"]
     # assets = {a: v for a, v in assets.items() if v["category"] == category}
     # asset = assets[list(assets.keys())[i]]
 
-    for i in range(1):
+    for i in range(3):
         start_time = time.time()
-        asset = get_random_asset(assets, nonrandom_asset="chair_109_01", randomness=False)
+        asset = get_random_asset(assets, nonrandom_asset="chair_109_01", randomness=True)
         logging.info(f"Got asset '{asset['name']}' of type '{asset['category']}'")
 
         if asset["name"] in to_skip:
@@ -1267,15 +1276,6 @@ def run_main():
             bpy.data.objects[object].hide_render = True
             bpy.data.objects[object].hide_viewport = True
 
-        add_asset("//assets/custom_planes/plane_09.blend", 'Plane_09', rotation_degrees=0, randomness=False)
-        logging.debug('added plane asset')
-
-        take_picture(experiment_name, f'{i}__9')
-
-        for object in ["Plane_09"]:
-            bpy.data.objects[object].hide_render = True
-            bpy.data.objects[object].hide_viewport = True
-
         add_asset("//assets/custom_planes/plane_10.blend", 'Plane_10', rotation_degrees=0, randomness=False)
         logging.debug('added plane asset')
 
@@ -1302,11 +1302,11 @@ def run_main():
 
         add_asset("//assets/custom_planes/plane_04.blend", 'Plane_04', rotation_degrees=0, randomness=False)
 
+        customize_render_resolution(4096)
         take_picture(experiment_name, f'{i}__4')
+        customize_render_resolution(1024)
 
         connect_nodes(asset_material.node_tree, previous_node, previous_socket_name, output_node, "Surface")
-
-        take_picture(experiment_name, f'{i}__7')
 
         for object in ["Plane_04"]:  # , "back_left_light", "back_right_light", "front_light"]:
             bpy.data.objects[object].hide_render = True
