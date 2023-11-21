@@ -1147,7 +1147,10 @@ def create_room(asset_size, camera_position, materials, hdri_name, randomness=Tr
     logging.debug('ran "create_room"')
 
 
-def connect_nodes(node_tree, from_node, from_socket_name, to_node, to_socket_name):
+def connect_nodes(asset_material, from_node, from_socket_name, to_node, to_socket_name, uses_nodes=True):
+    node_tree = asset_material.node_tree
+    if not uses_nodes:
+        asset_material.use_nodes = uses_nodes
     for socket in from_node.outputs:
         if socket.name == from_socket_name:
             for to_socket in to_node.inputs:
@@ -1173,6 +1176,9 @@ def add_node_group_to_material(material, node_group_name, output_socket_name):
     if node_group is None:
         print("Node group not found!")
 
+    uses_nodes = material.use_nodes
+    if not material.use_nodes:
+        material.use_nodes = True
     node_tree = material.node_tree
 
     output_node = select_node_by_type(node_tree, 'OUTPUT_MATERIAL')
@@ -1189,10 +1195,10 @@ def add_node_group_to_material(material, node_group_name, output_socket_name):
     group_node.node_tree = node_group
     group_node.location = (output_node.location.x - 300, output_node.location.y)
 
-    connect_nodes(node_tree, group_node, output_socket_name, output_node, "Surface")
+    connect_nodes(material, group_node, output_socket_name, output_node, "Surface")
 
     previous_node = select_node_by_type(node_tree, previous_node_type)
-    return previous_node, previous_socket_name, output_node
+    return previous_node, previous_socket_name, output_node, uses_nodes
 
 
 def add_node_group_to_all_materials(node_group_name, output_socket_name):
@@ -1226,18 +1232,6 @@ def save_metadata(
     logging.debug('ran "save_metadata"')
 
 
-def set_to_diffuse_rendering():
-    bpy.data.scenes["Scene"].use_nodes = True
-    bpy.data.scenes["Scene"].view_layers["ViewLayer"].use_pass_diffuse_color = True
-    node_tree = bpy.data.scenes["Scene"].node_tree
-    connect_nodes(node_tree, node_tree.nodes["Render Layers"], "DiffCol", node_tree.nodes["Composite"], "Image")
-
-
-def reset_to_image_rendering():
-    node_tree = bpy.data.scenes["Scene"].node_tree
-    connect_nodes(node_tree, node_tree.nodes["Render Layers"], "Image", node_tree.nodes["Composite"], "Image")
-
-
 def get_average_brightness(experiment_name, image_name):
     pic = bpy.data.images.load(f"//output/{experiment_name}/{image_name}.png")
     pic_array = np.array(pic.pixels[:]).reshape((1024, 1024, 4)) * 255
@@ -1254,7 +1248,7 @@ def run_main():
     to_skip = define_skip_assets()
     materials = get_materials_info()
     assets = get_assets_info()
-    experiment_name = 'experiment_93'
+    experiment_name = 'experiment_95'
 
     #  "beds", "cabinets",  "chairs"
     # ["decor", "electronics", "lamps", "plants", "shelves", "sofas", "tables", "tablesets"]
@@ -1268,9 +1262,14 @@ def run_main():
     #     hdri = f"//assets/background/{exr_file}"
     #     hdri_name = exr_file
 
-    for i in range(10):
+    # for i in range(10):
+
+    for i, asset in enumerate(assets.values()):
+        # if i > 5:
+        #     break
+
         start_time = time.time()
-        asset = get_random_asset(assets, nonrandom_asset="chair_109_01", randomness=True)
+        # asset = get_random_asset(assets, nonrandom_asset="chair_109_01", randomness=True)
         logging.info(f"Got asset '{asset['name']}' of type '{asset['category']}'")
 
         if asset["name"] in to_skip:
@@ -1323,10 +1322,10 @@ def run_main():
         # asset_material = bpy.data.objects[asset['name']].active_material
         previous_connections = []
         for asset_material in asset_materials:
-            previous_node, previous_socket_name, output_node = add_node_group_to_material(
+            previous_node, previous_socket_name, output_node, uses_nodes = add_node_group_to_material(
                 asset_material, "get_pitch_black", 'Value'
             )
-            previous_connections.append((asset_material, previous_node, previous_socket_name, output_node))
+            previous_connections.append((asset_material, previous_node, previous_socket_name, output_node, uses_nodes))
 
         add_asset("//assets/custom_planes/plane_04.blend", 'Plane_04', rotation_degrees=0, randomness=False)
 
@@ -1334,8 +1333,8 @@ def run_main():
         take_picture(experiment_name, f'{i}__4')
         customize_render_resolution(1024)
 
-        for asset_material, previous_node, previous_socket_name, output_node in previous_connections:
-            connect_nodes(asset_material.node_tree, previous_node, previous_socket_name, output_node, "Surface")
+        for asset_material, previous_node, previous_socket_name, output_node, uses_nodes in previous_connections:
+            connect_nodes(asset_material, previous_node, previous_socket_name, output_node, "Surface", uses_nodes)
 
         for object in ["Plane_04"]:  # , "back_left_light", "back_right_light", "front_light"]:
             bpy.data.objects[object].hide_render = True
