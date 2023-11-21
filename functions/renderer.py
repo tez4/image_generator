@@ -8,6 +8,8 @@ import time
 import bmesh
 import random
 import mathutils
+import numpy as np
+from PIL import Image
 from mathutils import Matrix, Vector
 from math import radians, atan2, sqrt, acos, degrees
 
@@ -1100,7 +1102,7 @@ def create_room(asset_size, camera_position, materials, hdri_name, randomness=Tr
         light_radius_random = random.random() if randomness else 0.5
         light_energy_random = random.random() if randomness else 0.5
         light_radius = 0.2 + 0.8 * light_radius_random
-        light_energy = 10 + 40 * light_energy_random
+        light_energy = (1 + (4 * light_energy_random)) * (abs(x_left) + abs(x_right)) * (abs(y_front) + abs(y_behind))
 
         add_light('room_light', (x_light, y_light, z_top - 0.1), light_radius, light_energy, 'AREA')
 
@@ -1195,7 +1197,8 @@ def add_node_group_to_all_materials(node_group_name, output_socket_name):
             add_node_group_to_material(material, node_group_name, output_socket_name)
 
 
-def save_metadata(folder, file_name, asset, camera_position, camera_rotation, distance, hdri_name, time_difference):
+def save_metadata(
+        folder, file_name, asset, camera_position, camera_rotation, distance, hdri_name, time_difference, brightness):
     folder_path = f'./output/{folder}'
     if not os.path.exists(folder_path):
         os.makedirs(folder_path)
@@ -1207,7 +1210,8 @@ def save_metadata(folder, file_name, asset, camera_position, camera_rotation, di
         'camera_rotation': camera_rotation,
         'distance': distance,
         'hdri_name': hdri_name,
-        'time_to_compute': time_difference
+        'time_to_compute': time_difference,
+        'brightness': brightness,
     }
     with open(file_path, 'w') as outfile:
         json.dump(metadata, outfile)
@@ -1227,6 +1231,12 @@ def reset_to_image_rendering():
     connect_nodes(node_tree, node_tree.nodes["Render Layers"], "Image", node_tree.nodes["Composite"], "Image")
 
 
+def get_average_brightness(experiment_name, image_name):
+    pic = Image.open(f"./output/{experiment_name}/{image_name}.png")
+    pic_array = np.array(pic).astype('float64')
+    return np.mean(pic_array[:, :, :3])
+
+
 def run_main():
 
     logging.info("Started Program")
@@ -1237,16 +1247,23 @@ def run_main():
     to_skip = define_skip_assets()
     materials = get_materials_info()
     assets = get_assets_info()
-    experiment_name = 'experiment_84'
+    experiment_name = 'experiment_89'
 
     #  "beds", "cabinets",  "chairs"
     # ["decor", "electronics", "lamps", "plants", "shelves", "sofas", "tables", "tablesets"]
     # assets = {a: v for a, v in assets.items() if v["category"] == category}
     # asset = assets[list(assets.keys())[i]]
 
-    for i in range(3):
+    # files = os.listdir("./assets/background/")
+    # exr_files = [f for f in files if f.endswith(".exr")]
+
+    # for i, exr_file in enumerate(exr_files):
+    #     hdri = f"//assets/background/{exr_file}"
+    #     hdri_name = exr_file
+
+    for i in range(20):
         start_time = time.time()
-        asset = get_random_asset(assets, nonrandom_asset="chair_109_01", randomness=True)
+        asset = get_random_asset(assets, nonrandom_asset="chair_109_01", randomness=False)
         logging.info(f"Got asset '{asset['name']}' of type '{asset['category']}'")
 
         if asset["name"] in to_skip:
@@ -1259,7 +1276,7 @@ def run_main():
             logging.debug('ran "asset skipped because too big"')
             continue
 
-        camera_position, camera_rotation, distance = add_camera(asset_size, randomness=False)
+        camera_position, camera_rotation, distance = add_camera(asset_size, randomness=True)
         bpy.data.objects[asset['name']].rotation_euler[2] += radians(-camera_rotation)
         asset_size = get_asset_size(asset['name'])
         logging.debug(f'cam at: {camera_position} with distance {distance}')
@@ -1313,16 +1330,20 @@ def run_main():
             bpy.data.objects[object].hide_viewport = True
 
         hdri, hdri_name = get_random_hdri(randomness=True)
-        add_world_background(hdri, 1.0, 90, randomness=True)
+        create_room(asset_size, camera_position, materials, hdri_name, randomness=True)
 
-        create_room(asset_size, camera_position, materials, hdri_name, randomness=False)
-        take_picture(experiment_name, f'{i}__1')
-
-        # set_to_diffuse_rendering()
-        # take_picture(experiment_name, f'{i}__7')
-        # reset_to_image_rendering()
-
-        # get_image_difference(experiment_name, f'{i}__7', f'{i}__1', f'{i}__8')
+        loops = 0
+        hdri_brightness = 2.0
+        is_bright_enough = False
+        while not is_bright_enough:
+            add_world_background(hdri, hdri_brightness, 90, randomness=True)
+            take_picture(experiment_name, f'{i}__1')
+            brightness = get_average_brightness(experiment_name, f'{i}__1')
+            hdri_brightness *= 3
+            loops += 1
+            logging.info(f'loops: {loops}, brightness: {brightness}')
+            if brightness > 50 or loops > 3:
+                is_bright_enough = True
 
         append_node_group_from_library("normal.blend", "get_normal")
         add_node_group_to_all_materials("get_normal", 'Emission')
@@ -1336,7 +1357,8 @@ def run_main():
         end_time = time.time()
         time_difference = int(end_time - start_time)
         save_metadata(
-            experiment_name, f'{i}__0', asset, camera_position, camera_rotation, distance, hdri_name, time_difference
+            experiment_name, f'{i}__0', asset, camera_position, camera_rotation, distance, hdri_name, time_difference,
+            brightness
         )
 
     logging.info('Done!')
