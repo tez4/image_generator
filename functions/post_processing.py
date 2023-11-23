@@ -34,7 +34,7 @@ def create_white_background(
     new_background[new_background < 0] = 0
 
     new_array = mask_array * new_background + (1 - mask_array) * new_object
-    new_image = Image.fromarray(np.uint8(new_array))
+    new_image = Image.fromarray(np.uint8(new_array)).convert('RGB')
     new_image.save(f"{output_folder}/{new_image_name}.png")
     # new_image.show()
 
