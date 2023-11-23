@@ -87,7 +87,7 @@ def copy_image(
 
 
 if __name__ == "__main__":
-    experiment = 'experiment_93'
+    experiment = 'experiment_95'
     folder = f'./output/{experiment}'
 
     object_numbers = []
@@ -96,8 +96,16 @@ if __name__ == "__main__":
             object_number = file.split('__')[0]
             object_numbers.append(object_number)
 
-    for object_number in object_numbers:
-        new_folder = f'{folder}_preprocessed/{object_number}'
+    create_folder(f'{folder}_preprocessed', remove_content=True)
+
+    for i, object_number in enumerate(object_numbers):
+        if i <= int(len(object_numbers) / 10):
+            new_folder = f'{folder}_preprocessed/test/{i}'
+        elif i <= int(len(object_numbers) / 10 * 3):
+            new_folder = f'{folder}_preprocessed/validation/{i}'
+        else:
+            new_folder = f'{folder}_preprocessed/training/{i}'
+
         create_folder(new_folder, remove_content=True)
         copy_image(folder, new_folder, object_number, 1, 'input')
         copy_image(folder, new_folder, object_number, 2, 'normals')
