@@ -1,16 +1,18 @@
 import os
+import shutil
 import numpy as np
 import matplotlib.pyplot as plt
 from PIL import Image
+from pathlib import Path
 from copy import deepcopy
 
 
 def create_white_background(
-        experiment_name, object_number, mask_image_number, image_number, new_image_number, background_change,
-        shadow_contrast_multiplier, object_contrast_multiplier):
+        input_folder, output_folder, object_number, mask_image_number, image_number, new_image_name,
+        background_change, shadow_contrast_multiplier, object_contrast_multiplier):
 
-    pic_1 = Image.open(f"./output/{experiment_name}/{object_number}__{mask_image_number}.png")
-    pic_2 = Image.open(f"./output/{experiment_name}/{object_number}__{image_number}.png")
+    pic_1 = Image.open(f"{input_folder}/{object_number}__{mask_image_number}.png")
+    pic_2 = Image.open(f"{input_folder}/{object_number}__{image_number}.png")
     pic_1 = pic_1.resize(pic_2.size)
 
     pic_1_array = np.array(pic_1).astype('float64')
@@ -33,7 +35,7 @@ def create_white_background(
 
     new_array = mask_array * new_background + (1 - mask_array) * new_object
     new_image = Image.fromarray(np.uint8(new_array))
-    new_image.save(f"./output/{experiment_name}/{object_number}__{new_image_number}.png")
+    new_image.save(f"{output_folder}/{new_image_name}.png")
     # new_image.show()
 
 
@@ -62,9 +64,30 @@ def get_image_from_array(array):
     return image
 
 
+def create_folder(folder_path, remove_content):
+    directory = Path(folder_path)
+    if directory.exists() and directory.is_dir():
+        if remove_content:
+            shutil.rmtree(directory)
+    directory.mkdir(parents=True, exist_ok=True)
+
+
+def copy_image(
+        input_folder, output_folder, object_number, image_number, new_image_name, is_grayscale=False, new_size=None):
+
+    image = Image.open(f"{input_folder}/{object_number}__{image_number}.png")
+    if new_size is not None:
+        image = image.resize(new_size)
+    if is_grayscale:
+        image = image.convert('L')
+    else:
+        image = image.convert('RGB')
+
+    image.save(f"{output_folder}/{new_image_name}.png")
+
+
 if __name__ == "__main__":
-    # loop over all images in the folder
-    experiment = 'experiment_82'
+    experiment = 'experiment_93'
     folder = f'./output/{experiment}'
 
     object_numbers = []
@@ -74,6 +97,13 @@ if __name__ == "__main__":
             object_numbers.append(object_number)
 
     for object_number in object_numbers:
-        create_white_background(experiment, object_number, 4, 8, 12, 35, 1, 1)
-        create_white_background(experiment, object_number, 4, 10, 13, 55, 1.6, 1.15)
-        create_white_background(experiment, object_number, 4, 11, 14, 85, 1.4, 1.2)
+        new_folder = f'{folder}_preprocessed/{object_number}'
+        create_folder(new_folder, remove_content=True)
+        copy_image(folder, new_folder, object_number, 1, 'input')
+        copy_image(folder, new_folder, object_number, 2, 'normals')
+        copy_image(folder, new_folder, object_number, 3, 'distance', is_grayscale=True)
+        copy_image(folder, new_folder, object_number, 4, 'mask', is_grayscale=True, new_size=(1024, 1024))
+        create_white_background(folder, new_folder, object_number, 4, 11, 'output_1', 85, 1.4, 1.2)
+        create_white_background(folder, new_folder, object_number, 4, 10, 'output_2', 55, 1.6, 1.15)
+        create_white_background(folder, new_folder, object_number, 4, 8, 'output_3', 35, 1, 1)
+        shutil.copy(f'{folder}/0__0.json', f'{new_folder}/metadata.json')
