@@ -1277,116 +1277,126 @@ def run_main():
     #     hdri_name = exr_file
 
     # for i in range(10):
+    i = 0
+    total_start_time = time.time()
 
-    for i, asset in enumerate(assets.values()):
-        # if i > 5:
-        #     break
+    for j in range(1):
+        for asset in assets.values():
+            i += 1
 
-        start_time = time.time()
-        # asset = get_random_asset(assets, nonrandom_asset="chair_109_01", randomness=True)
-        logging.info(f"Got asset '{asset['name']}' of type '{asset['category']}'")
+            if i > 5:
+                break
 
-        if asset["name"] in to_skip:
-            continue
+            start_time = time.time()
+            # asset = get_random_asset(assets, nonrandom_asset="chair_109_01", randomness=True)
+            logging.info(f"Got asset '{asset['name']}' of type '{asset['category']}'")
 
-        remove_old_objects()
-        add_asset(f"//assets/interior_models/{asset['file']}", asset['name'], 30, randomness=False)
-        asset_size = get_asset_size(asset['name'])
-        if asset_size[2] > 2.6:
-            logging.debug('ran "asset skipped because too big"')
-            continue
+            if asset["name"] in to_skip:
+                continue
 
-        camera_position, camera_rotation, distance, f_stop = add_camera(asset_size, randomness=True)
-        bpy.data.objects[asset['name']].rotation_euler[2] += radians(-camera_rotation)
-        asset_size = get_asset_size(asset['name'])
-        logging.debug(f'cam at: {camera_position} with distance {distance}')
+            remove_old_objects()
+            add_asset(f"//assets/interior_models/{asset['file']}", asset['name'], 30, randomness=True)
+            asset_size = get_asset_size(asset['name'])
+            if asset_size[2] > 2.6:
+                logging.debug('ran "asset skipped because too big"')
+                continue
 
-        add_world_background("//assets/background/abandoned_slipway_4k.exr", 1, 270, randomness=False)
-        logging.debug('added world background')
+            camera_position, camera_rotation, distance, f_stop = add_camera(asset_size, randomness=True)
+            bpy.data.objects[asset['name']].rotation_euler[2] += radians(-camera_rotation)
+            asset_size = get_asset_size(asset['name'])
+            logging.debug(f'cam at: {camera_position} with distance {distance}')
 
-        add_asset("//assets/custom_planes/plane_08.blend", 'Plane_08', rotation_degrees=0, randomness=False)
-        logging.debug('added plane asset')
+            add_world_background("//assets/background/abandoned_slipway_4k.exr", 1, 270, randomness=False)
+            logging.debug('added world background')
 
-        take_picture(experiment_name, f'{i}__8')
+            add_asset("//assets/custom_planes/plane_08.blend", 'Plane_08', rotation_degrees=0, randomness=False)
+            logging.debug('added plane asset')
 
-        for object in ["Plane_08"]:
-            bpy.data.objects[object].hide_render = True
-            bpy.data.objects[object].hide_viewport = True
+            take_picture(experiment_name, f'{i}__8')
 
-        add_asset("//assets/custom_planes/plane_10.blend", 'Plane_10', rotation_degrees=0, randomness=False)
-        logging.debug('added plane asset')
+            for object in ["Plane_08"]:
+                bpy.data.objects[object].hide_render = True
+                bpy.data.objects[object].hide_viewport = True
 
-        take_picture(experiment_name, f'{i}__10')
+            add_asset("//assets/custom_planes/plane_10.blend", 'Plane_10', rotation_degrees=0, randomness=False)
+            logging.debug('added plane asset')
 
-        for object in ["Plane_10"]:
-            bpy.data.objects[object].hide_render = True
-            bpy.data.objects[object].hide_viewport = True
+            take_picture(experiment_name, f'{i}__10')
 
-        add_asset("//assets/custom_planes/plane_11.blend", 'Plane_11', rotation_degrees=0, randomness=False)
-        logging.debug('added plane asset')
+            for object in ["Plane_10"]:
+                bpy.data.objects[object].hide_render = True
+                bpy.data.objects[object].hide_viewport = True
 
-        take_picture(experiment_name, f'{i}__11')
+            add_asset("//assets/custom_planes/plane_11.blend", 'Plane_11', rotation_degrees=0, randomness=False)
+            logging.debug('added plane asset')
 
-        for object in ["Plane_11"]:
-            bpy.data.objects[object].hide_render = True
-            bpy.data.objects[object].hide_viewport = True
+            take_picture(experiment_name, f'{i}__11')
 
-        append_node_group_from_library("pitch_black.blend", "get_pitch_black")
-        asset_materials = [ms.material for ms in bpy.data.objects[asset['name']].material_slots]
-        # asset_material = bpy.data.objects[asset['name']].active_material
-        previous_connections = []
-        for asset_material in asset_materials:
-            previous_node, previous_socket_name, output_node, uses_nodes = add_node_group_to_material(
-                asset_material, "get_pitch_black", 'Value'
+            for object in ["Plane_11"]:
+                bpy.data.objects[object].hide_render = True
+                bpy.data.objects[object].hide_viewport = True
+
+            append_node_group_from_library("pitch_black.blend", "get_pitch_black")
+            asset_materials = [ms.material for ms in bpy.data.objects[asset['name']].material_slots]
+            # asset_material = bpy.data.objects[asset['name']].active_material
+            previous_connections = []
+            for asset_material in asset_materials:
+                previous_node, previous_socket_name, output_node, uses_nodes = add_node_group_to_material(
+                    asset_material, "get_pitch_black", 'Value'
+                )
+                previous_connections.append(
+                    (asset_material, previous_node, previous_socket_name, output_node, uses_nodes)
+                )
+
+            add_asset("//assets/custom_planes/plane_04.blend", 'Plane_04', rotation_degrees=0, randomness=False)
+
+            customize_render_resolution(4096)
+            take_picture(experiment_name, f'{i}__4')
+            customize_render_resolution(1024)
+
+            for asset_material, previous_node, previous_socket_name, output_node, uses_nodes in previous_connections:
+                connect_nodes(asset_material, previous_node, previous_socket_name, output_node, "Surface", uses_nodes)
+
+            for object in ["Plane_04"]:  # , "back_left_light", "back_right_light", "front_light"]:
+                bpy.data.objects[object].hide_render = True
+                bpy.data.objects[object].hide_viewport = True
+
+            hdri, hdri_name = get_random_hdri(randomness=True)
+            room_metadata = create_room(asset_size, camera_position, materials, hdri_name, randomness=True)
+
+            loops = 0
+            hdri_brightness = 2.0
+            is_bright_enough = False
+            while not is_bright_enough:
+                add_world_background(hdri, hdri_brightness, 90, randomness=True)
+                take_picture(experiment_name, f'{i}__1')
+                brightness = get_average_brightness(experiment_name, f'{i}__1')
+                hdri_brightness *= 3
+                loops += 1
+                logging.info(f'loops: {loops}, brightness: {brightness}')
+                if brightness > 50 or loops > 3:
+                    is_bright_enough = True
+
+            append_node_group_from_library("normal.blend", "get_normal")
+            add_node_group_to_all_materials("get_normal", 'Emission')
+            take_picture(experiment_name, f'{i}__2')
+
+            append_node_group_from_library("distance.blend", "get_distance")
+            add_node_group_to_all_materials("get_distance", 'Emission')
+            bpy.data.node_groups['get_distance'].nodes["Map Range"].inputs[2].default_value = distance * 2
+            take_picture(experiment_name, f'{i}__3')
+
+            end_time = time.time()
+            time_difference = int(end_time - start_time)
+            save_metadata(
+                experiment_name, f'{i}__0', asset, camera_position, camera_rotation, distance, hdri_name,
+                time_difference, brightness, f_stop, room_metadata
             )
-            previous_connections.append((asset_material, previous_node, previous_socket_name, output_node, uses_nodes))
 
-        add_asset("//assets/custom_planes/plane_04.blend", 'Plane_04', rotation_degrees=0, randomness=False)
+    total_end_time = time.time()
+    total_time_difference = int(total_end_time - total_start_time)
 
-        customize_render_resolution(4096)
-        take_picture(experiment_name, f'{i}__4')
-        customize_render_resolution(1024)
-
-        for asset_material, previous_node, previous_socket_name, output_node, uses_nodes in previous_connections:
-            connect_nodes(asset_material, previous_node, previous_socket_name, output_node, "Surface", uses_nodes)
-
-        for object in ["Plane_04"]:  # , "back_left_light", "back_right_light", "front_light"]:
-            bpy.data.objects[object].hide_render = True
-            bpy.data.objects[object].hide_viewport = True
-
-        hdri, hdri_name = get_random_hdri(randomness=True)
-        room_metadata = create_room(asset_size, camera_position, materials, hdri_name, randomness=True)
-
-        loops = 0
-        hdri_brightness = 2.0
-        is_bright_enough = False
-        while not is_bright_enough:
-            add_world_background(hdri, hdri_brightness, 90, randomness=True)
-            take_picture(experiment_name, f'{i}__1')
-            brightness = get_average_brightness(experiment_name, f'{i}__1')
-            hdri_brightness *= 3
-            loops += 1
-            logging.info(f'loops: {loops}, brightness: {brightness}')
-            if brightness > 50 or loops > 3:
-                is_bright_enough = True
-
-        append_node_group_from_library("normal.blend", "get_normal")
-        add_node_group_to_all_materials("get_normal", 'Emission')
-        take_picture(experiment_name, f'{i}__2')
-
-        append_node_group_from_library("distance.blend", "get_distance")
-        add_node_group_to_all_materials("get_distance", 'Emission')
-        bpy.data.node_groups['get_distance'].nodes["Map Range"].inputs[2].default_value = distance * 2
-        take_picture(experiment_name, f'{i}__3')
-
-        end_time = time.time()
-        time_difference = int(end_time - start_time)
-        save_metadata(
-            experiment_name, f'{i}__0', asset, camera_position, camera_rotation, distance, hdri_name, time_difference,
-            brightness, f_stop, room_metadata
-        )
-
-    logging.info('Done!')
+    logging.info(f'Done! {total_time_difference}s total runtime.')
 
 
 run_main()

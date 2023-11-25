@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH -p performance
-#SBATCH -t 1-00:00:00
+#SBATCH -t 5-00:00:00
 #SBATCH --gpus=4
 #SBATCH --job-name=blender_render
 #SBATCH --output=outerr.log
