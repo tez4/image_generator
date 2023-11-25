@@ -114,4 +114,4 @@ if __name__ == "__main__":
         create_white_background(folder, new_folder, object_number, 4, 11, 'output_1', 85, 1.4, 1.2)
         create_white_background(folder, new_folder, object_number, 4, 10, 'output_2', 55, 1.6, 1.15)
         create_white_background(folder, new_folder, object_number, 4, 8, 'output_3', 35, 1, 1)
-        shutil.copy(f'{folder}/0__0.json', f'{new_folder}/metadata.json')
+        shutil.copy(f'{folder}/{object_number}__0.json', f'{new_folder}/metadata.json')
