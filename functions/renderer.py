@@ -1036,7 +1036,7 @@ def create_room(asset_size, camera_position, materials, hdri_name, randomness=Tr
 
     z_top = max(asset_size[2] + 0.2, 2) + (z_random * 1.2)
     x_left = (min(-asset_size[0] / 2, camera_position[0]) - 0.4 - (x_left_random * 2))
-    x_right = (max(asset_size[0] / 2, camera_position[1]) + 0.4 + (x_right_random * 2))
+    x_right = (max(asset_size[0] / 2, camera_position[0]) + 0.4 + (x_right_random * 2))
     y_behind = (asset_size[1] / 2) + 0.05 + (y_behind_random * 0.45)
     y_front = camera_position[1] - 0.2 - (y_front_random * 2.8)
 
@@ -1144,7 +1144,20 @@ def create_room(asset_size, camera_position, materials, hdri_name, randomness=Tr
             glass_material_name, overlap, randomness
         )
 
+    room_metadata = {
+        'width': width,
+        'depth': depth,
+        'height': height,
+        'z_top': z_top,
+        'x_left': x_left,
+        'x_right': x_right,
+        'y_behind': y_behind,
+        'y_front': y_front,
+        'needs_light': hdri_name in needs_light,
+    }
+
     logging.debug('ran "create_room"')
+    return room_metadata
 
 
 def connect_nodes(asset_material, from_node, from_socket_name, to_node, to_socket_name, uses_nodes=True):
@@ -1209,7 +1222,7 @@ def add_node_group_to_all_materials(node_group_name, output_socket_name):
 
 def save_metadata(
         folder, file_name, asset, camera_position, camera_rotation, distance, hdri_name, time_difference, brightness,
-        f_stop):
+        f_stop, room_metadata):
 
     folder_path = f'./output/{folder}'
     if not os.path.exists(folder_path):
@@ -1225,6 +1238,7 @@ def save_metadata(
         'time_to_compute': time_difference,
         'brightness': brightness,
         'f_stop': f_stop,
+        'room_metadata': room_metadata,
     }
     with open(file_path, 'w') as outfile:
         json.dump(metadata, outfile)
@@ -1248,7 +1262,7 @@ def run_main():
     to_skip = define_skip_assets()
     materials = get_materials_info()
     assets = get_assets_info()
-    experiment_name = 'experiment_95'
+    experiment_name = 'experiment_97'
 
     #  "beds", "cabinets",  "chairs"
     # ["decor", "electronics", "lamps", "plants", "shelves", "sofas", "tables", "tablesets"]
@@ -1341,7 +1355,7 @@ def run_main():
             bpy.data.objects[object].hide_viewport = True
 
         hdri, hdri_name = get_random_hdri(randomness=True)
-        create_room(asset_size, camera_position, materials, hdri_name, randomness=True)
+        room_metadata = create_room(asset_size, camera_position, materials, hdri_name, randomness=True)
 
         loops = 0
         hdri_brightness = 2.0
@@ -1369,7 +1383,7 @@ def run_main():
         time_difference = int(end_time - start_time)
         save_metadata(
             experiment_name, f'{i}__0', asset, camera_position, camera_rotation, distance, hdri_name, time_difference,
-            brightness, f_stop
+            brightness, f_stop, room_metadata
         )
 
     logging.info('Done!')
