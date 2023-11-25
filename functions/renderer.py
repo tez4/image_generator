@@ -1262,7 +1262,8 @@ def run_main():
     to_skip = define_skip_assets()
     materials = get_materials_info()
     assets = get_assets_info()
-    experiment_name = 'experiment_98'
+    experiment_number = 99
+    experiment_name = f'experiment_{experiment_number}'
 
     #  "beds", "cabinets",  "chairs"
     # ["decor", "electronics", "lamps", "plants", "shelves", "sofas", "tables", "tablesets"]
@@ -1277,15 +1278,15 @@ def run_main():
     #     hdri_name = exr_file
 
     # for i in range(10):
-    i = 0
+    i = experiment_number * 1000000
     total_start_time = time.time()
 
-    for j in range(1):
+    for _ in range(5):
         for asset in assets.values():
             i += 1
 
-            if i > 5:
-                break
+            # if i > 5:
+            #     break
 
             start_time = time.time()
             # asset = get_random_asset(assets, nonrandom_asset="chair_109_01", randomness=True)
