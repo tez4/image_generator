@@ -667,11 +667,11 @@ def customize_render_quality(show_background=False, high_quality=True, image_siz
     if high_quality:
         bpy.data.scenes['Scene'].render.engine = 'CYCLES'
         bpy.data.scenes['Scene'].cycles.device = 'GPU'
-        bpy.context.preferences.addons['cycles'].preferences.compute_device_type = 'OPTIX'
-        for device in bpy.context.preferences.addons['cycles'].preferences.get_devices_for_type('OPTIX'):
-            if device.type == 'OPTIX':
+        bpy.context.preferences.addons['cycles'].preferences.compute_device_type = 'CUDA'
+        for device in bpy.context.preferences.addons['cycles'].preferences.get_devices_for_type('CUDA'):
+            if device.type == 'CUDA':
                 device.use = True
-                logging.debug(f"OPTIX device {device.name}")
+                logging.debug(f"CUDA device {device.name}")
         bpy.ops.wm.save_userpref()
         bpy.data.scenes['Scene'].cycles.adaptive_threshold = 0.1
     else:
@@ -1262,7 +1262,7 @@ def run_main():
     to_skip = define_skip_assets()
     materials = get_materials_info()
     assets = get_assets_info()
-    experiment_name = 'experiment_97'
+    experiment_name = 'experiment_98'
 
     #  "beds", "cabinets",  "chairs"
     # ["decor", "electronics", "lamps", "plants", "shelves", "sofas", "tables", "tablesets"]
