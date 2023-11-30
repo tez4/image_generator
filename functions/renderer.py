@@ -9,6 +9,7 @@ import bmesh
 import random
 import mathutils
 import numpy as np
+from pathlib import Path
 from mathutils import Matrix, Vector
 from math import radians, atan2, sqrt, acos, degrees
 
@@ -1258,11 +1259,15 @@ def run_main():
     print(f"Python Version: {sys.version}")
     print(f"Blender Version: {bpy.app.version_string}")
 
+    assert Path("./config.json").exists(), "config not found. copy config.json to create config_local.json!"
+    with open("./config.json") as f:
+        config = json.load(f)
+
     customize_render_quality(show_background=True, high_quality=True, image_size=1024)
     to_skip = define_skip_assets()
     materials = get_materials_info()
     assets = get_assets_info()
-    experiment_number = 99
+    experiment_number = config['experiment_number']
     experiment_name = f'experiment_{experiment_number}'
 
     #  "beds", "cabinets",  "chairs"
