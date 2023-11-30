@@ -1,4 +1,5 @@
 import os
+import json
 import shutil
 import numpy as np
 import matplotlib.pyplot as plt
@@ -86,8 +87,18 @@ def copy_image(
     image.save(f"{output_folder}/{new_image_name}.png")
 
 
+def list_sub_directories(directory):
+    return [item for item in os.listdir(directory) if os.path.isdir(os.path.join(directory, item))]
+
+
 if __name__ == "__main__":
-    experiment = 'experiment_95'
+
+    assert Path("./config.json").exists(), "config not found. copy config.json to create config_local.json!"
+    with open("./config.json") as f:
+        config = json.load(f)
+
+    experiment = config["experiment_name"]
+    preprocessed_folder = f'./output/{config["preprocessed_name"]}'
     folder = f'./output/{experiment}'
 
     object_numbers = []
@@ -96,15 +107,36 @@ if __name__ == "__main__":
             object_number = file.split('__')[0]
             object_numbers.append(object_number)
 
-    create_folder(f'{folder}_preprocessed', remove_content=True)
+    create_folder(f'{preprocessed_folder}', remove_content=False)
+    for folder_name in ['test', 'validation', 'training']:
+        create_folder(f'{preprocessed_folder}/{folder_name}', remove_content=False)
 
-    for i, object_number in enumerate(object_numbers):
-        if i <= int(len(object_numbers) / 10):
-            new_folder = f'{folder}_preprocessed/test/{i}'
-        elif i <= int(len(object_numbers) / 10 * 3):
-            new_folder = f'{folder}_preprocessed/validation/{i}'
+    for object_number in object_numbers:
+        test_folders = list_sub_directories(f"{preprocessed_folder}/test/")
+        validation_folders = list_sub_directories(f"{preprocessed_folder}/validation")
+        training_folders = list_sub_directories(f"{preprocessed_folder}/training")
+        all_folders = test_folders + validation_folders + training_folders
+
+        object_name = f"{experiment}_{object_number}"
+        if object_name in all_folders:
+            continue
+
+        incomplete_object = False
+        for i, ending in zip([1, 2, 3, 4, 11, 10, 8, 0], ['png', 'png', 'png', 'png', 'png', 'png', 'png', 'json']):
+            if not os.path.isfile(f"{folder}/{object_number}__{i}.{ending}"):
+                incomplete_object = True
+                break
+
+        if incomplete_object:
+            print(f"Object {object_number} is incomplete")
+            continue
+
+        if len(test_folders) < len(all_folders) / 10:
+            new_folder = f'{preprocessed_folder}/test/{object_name}'
+        elif len(validation_folders) < len(all_folders) / 10 * 2:
+            new_folder = f'{preprocessed_folder}/validation/{object_name}'
         else:
-            new_folder = f'{folder}_preprocessed/training/{i}'
+            new_folder = f'{preprocessed_folder}/training/{object_name}'
 
         create_folder(new_folder, remove_content=True)
         copy_image(folder, new_folder, object_number, 1, 'input')
