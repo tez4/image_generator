@@ -97,53 +97,54 @@ if __name__ == "__main__":
     with open("./config.json") as f:
         config = json.load(f)
 
-    experiment = config["experiment_name"]
     preprocessed_folder = f'./output/{config["preprocessed_name"]}'
-    folder = f'./output/{experiment}'
-
-    object_numbers = []
-    for file in os.listdir(folder):
-        if file.endswith(".json"):
-            object_number = file.split('__')[0]
-            object_numbers.append(object_number)
-
     create_folder(f'{preprocessed_folder}', remove_content=False)
     for folder_name in ['test', 'validation', 'training']:
         create_folder(f'{preprocessed_folder}/{folder_name}', remove_content=False)
 
-    for object_number in object_numbers:
-        test_folders = list_sub_directories(f"{preprocessed_folder}/test/")
-        validation_folders = list_sub_directories(f"{preprocessed_folder}/validation")
-        training_folders = list_sub_directories(f"{preprocessed_folder}/training")
-        all_folders = test_folders + validation_folders + training_folders
+    experiments = config["preprocessing_experiment_names"]
+    for experiment in experiments:
+        folder = f'./output/{experiment}'
 
-        object_name = f"{experiment}_{object_number}"
-        if object_name in all_folders:
-            continue
+        object_numbers = []
+        for file in os.listdir(folder):
+            if file.endswith(".json"):
+                object_number = file.split('__')[0]
+                object_numbers.append(object_number)
 
-        incomplete_object = False
-        for i, ending in zip([1, 2, 3, 4, 11, 10, 8, 0], ['png', 'png', 'png', 'png', 'png', 'png', 'png', 'json']):
-            if not os.path.isfile(f"{folder}/{object_number}__{i}.{ending}"):
-                incomplete_object = True
-                break
+        for object_number in object_numbers:
+            test_folders = list_sub_directories(f"{preprocessed_folder}/test/")
+            validation_folders = list_sub_directories(f"{preprocessed_folder}/validation")
+            training_folders = list_sub_directories(f"{preprocessed_folder}/training")
+            all_folders = test_folders + validation_folders + training_folders
 
-        if incomplete_object:
-            print(f"Object {object_number} is incomplete")
-            continue
+            object_name = f"{experiment}_{object_number}"
+            if object_name in all_folders:
+                continue
 
-        if len(test_folders) < len(all_folders) / 10:
-            new_folder = f'{preprocessed_folder}/test/{object_name}'
-        elif len(validation_folders) < len(all_folders) / 10 * 2:
-            new_folder = f'{preprocessed_folder}/validation/{object_name}'
-        else:
-            new_folder = f'{preprocessed_folder}/training/{object_name}'
+            incomplete_object = False
+            for i, ending in zip([1, 2, 3, 4, 11, 10, 8, 0], ['png', 'png', 'png', 'png', 'png', 'png', 'png', 'json']):
+                if not os.path.isfile(f"{folder}/{object_number}__{i}.{ending}"):
+                    incomplete_object = True
+                    break
 
-        create_folder(new_folder, remove_content=True)
-        copy_image(folder, new_folder, object_number, 1, 'input')
-        copy_image(folder, new_folder, object_number, 2, 'normals')
-        copy_image(folder, new_folder, object_number, 3, 'distance', is_grayscale=True)
-        copy_image(folder, new_folder, object_number, 4, 'mask', is_grayscale=True, new_size=(1024, 1024))
-        create_white_background(folder, new_folder, object_number, 4, 11, 'output_1', 85, 1.4, 1.2)
-        create_white_background(folder, new_folder, object_number, 4, 10, 'output_2', 55, 1.6, 1.15)
-        create_white_background(folder, new_folder, object_number, 4, 8, 'output_3', 35, 1, 1)
-        shutil.copy(f'{folder}/{object_number}__0.json', f'{new_folder}/metadata.json')
+            if incomplete_object:
+                print(f"Object {object_number} is incomplete")
+                continue
+
+            if len(test_folders) < len(all_folders) / 10:
+                new_folder = f'{preprocessed_folder}/test/{object_name}'
+            elif len(validation_folders) < len(all_folders) / 10 * 2:
+                new_folder = f'{preprocessed_folder}/validation/{object_name}'
+            else:
+                new_folder = f'{preprocessed_folder}/training/{object_name}'
+
+            create_folder(new_folder, remove_content=True)
+            copy_image(folder, new_folder, object_number, 1, 'input')
+            copy_image(folder, new_folder, object_number, 2, 'normals')
+            copy_image(folder, new_folder, object_number, 3, 'distance', is_grayscale=True)
+            copy_image(folder, new_folder, object_number, 4, 'mask', is_grayscale=True, new_size=(1024, 1024))
+            create_white_background(folder, new_folder, object_number, 4, 11, 'output_1', 85, 1.4, 1.2)
+            create_white_background(folder, new_folder, object_number, 4, 10, 'output_2', 55, 1.6, 1.15)
+            create_white_background(folder, new_folder, object_number, 4, 8, 'output_3', 35, 1, 1)
+            shutil.copy(f'{folder}/{object_number}__0.json', f'{new_folder}/metadata.json')
